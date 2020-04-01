@@ -1,0 +1,26 @@
+<apex:page docType="html-5.0">
+
+<script language="Javascript">
+    function change(input,panel){
+  if(input.pressed)  document.getElementById(panel).style.fontWeight="bold"; 
+    if(input.checked) document.getElementById(panel).style.fontWeight="bold";
+    else document.getElementById(panel).style.fontWeight="normal";
+    
+    }
+</script>
+
+
+<apex:form >
+
+    <apex:inputCheckbox onclick="change(this,'{!$Component.myPanel}')"/>CHANGE
+<br/>
+    <apex:commandButton onclick="change(this,'{!$Component.myPanel}')" value="change"/>
+    </apex:form>
+    
+<apex:outputPanel id="myPanel">
+
+Congratulations
+  </apex:outputPanel>
+
+
+</apex:page>

@@ -1,0 +1,3724 @@
+***************************************************************************************************************************************************************************************
+TCL
+***************************************************************************************************************************************************************************************
+TCL_CREATE
+
+
+APEX CONTROLLER:	TCL_Create_ctrl.apxc
+COMPONENT:			TCL_CREATE.cmp
+JS CONTROLLER:		TCL_CREATEController.js
+
+
+***************************************************************************************************************************************************************************************
+APEX CONTROLLER:	TCL_Create_ctrl.apxc
+***************************************************************************************************************************************************************************************
+
+/* Test class -TestTradeContactList*/
+public class TCL_Create_ctrl {
+    
+    @AuraEnabled
+    public static Campaign getCampaignDetails(String CampaignId){
+        System.debug('Hi'+CampaignId);
+        return [Select Id, Name, Will_Client_Hosts_need_to_be_associated__c, PSM_Lead__c, Event_Lead__c, OwnerId from Campaign where id=:CampaignId];
+    }
+    
+    @AuraEnabled
+    public static List<CampaignMember> getSelectedCMs(List<String> CMIds){
+        List<String> campMemIdList = new List<String>();
+        
+        for(String str : CMIds)
+            campMemIdList.add(str.removeStart('\'').removeEnd('\''));
+        
+        System.debug(' CMIds ++++'+CMIds);
+        return [Select Id, Name, Client_Host__c, Flag_for_Deletion__c from CampaignMember where id=:campMemIdList];
+    }
+    
+    @AuraEnabled
+    public static List<Client_Host__c> getClientHosts(String[] campaignMemId){
+        Set<String> ids = new Set<String>();
+        for(String str : campaignMemId){
+            System.debug(' str substring ' + str);
+            ids.add(str.substring(1,19));
+        }              
+        return [Select id, Name, CampaignMember_ID__c, User__c, uniqueCode__c,Campaign_Member_Name__c, User_Name__c from Client_Host__c where CampaignMember_ID__c =: ids];
+    }
+    
+    @AuraEnabled
+    public static List<CampaignMember> getFlaggedCM (String campId){
+        system.debug(' flaggedCM ' + campId);
+        
+        return [Select Id, Name,Contact_AccName__c,Client_Host__c,Flagged_for_Deletion_User__c,Flag_For_Del_User_Name__c,Flag_for_Deletion__c,Deletion_Approved__c from CampaignMember where Flag_for_Deletion__c = true and Campaignid =:campId ];
+    }
+    
+    @AuraEnabled
+    public static List<CampaignMember> getFlaggedCMUserSpecific (String campId, String loggedInUser){
+        system.debug(' loggedInUser ' + loggedInUser);
+        
+        return [Select Id, Name,Flag_for_Deletion__c,Deletion_Approved__c,Flagged_for_Deletion_User__c from CampaignMember 
+                where Flag_for_Deletion__c = true and Flagged_for_Deletion_User__c=:loggedInUser and Campaignid =:campId ];
+    }
+    
+    @AuraEnabled
+    public static String revoke(List<String> recallCMs){
+        String success = '';
+        System.debug(' recallCMs ' + recallCMs);
+        List <CampaignMember> revokMembers = new List<CampaignMember>();
+        
+        for(CampaignMember rcm : [Select Id, Name,Flag_for_Deletion__c,Flagged_for_Deletion_By_User__c,Deletion_Rejected__c,Flagged_for_Deletion_User__c from CampaignMember where id IN:recallCMs ]){
+            rcm.Flag_for_Deletion__c = false;
+            rcm.Deletion_Rejected__c = true;
+            rcm.Flagged_for_Deletion_User__c=null;
+            rcm.Flagged_for_Deletion_By_User__c=null;
+            revokMembers.add(rcm);                               
+        }
+        
+        try{
+            
+            update revokMembers;
+            success='Successfully Revoked';
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        
+        return success;
+        
+    }
+    
+    @AuraEnabled
+    public static String deleteApprovedCM (List<String> campMemIds){
+        system.debug(' flaggedCM ' + campMemIds);
+        String success='';
+        List<CampaignMember> approveList = new List<CampaignMember>();
+        Set<Id> cmIds = new Set<Id>();
+        
+        for(CampaignMember del : [Select Id, Name,Flag_for_Deletion__c,Deletion_Approved__c,Flagged_for_Deletion_User__c from CampaignMember where id IN:campMemIds ]){
+            del.Deletion_Approved__c = true;
+            approveList.add(del); 
+            cmIds.add(del.Id);
+        }
+        
+        
+        
+        try{
+            update approveList;
+        }Catch(Exception e){
+            system.Debug(' approveList Exception e'+e.getStackTraceString()); 
+        }
+        
+        try{
+            delete approveList;
+            delete [Select id from Client_Host__c where CampaignMember_ID__c =: cmIds];
+            success='Successfully Deleted';
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        
+        return success;
+    }
+    
+    @AuraEnabled
+    public static String deleteRejectCM (List<String> campMemIds){
+        
+        system.debug(' flaggedForRejectCM ' + campMemIds);
+        String success='';
+        List<CampaignMember> rejectList = new List<CampaignMember>();
+        
+        for(CampaignMember cm : [Select id, name, Flag_for_Deletion__c,Flagged_for_Deletion_User__c,Flagged_for_Deletion_By_User__c from CampaignMember where Id IN: campMemIds]){
+            cm.Flag_for_Deletion__c = false; 
+            cm.Flagged_for_Deletion_User__c=null;
+            cm.Flagged_for_Deletion_By_User__c=null;
+            rejectList.add(cm);
+        }
+        system.debug(' flaggedForRejectCM ' + rejectList);
+        try{
+            update rejectList;
+            success='Successfully Rejected';
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        
+        return success;
+    }
+    
+    @AuraEnabled
+    public static String deleteCHM(List<Id> chDeleteIds){
+        String success;
+        system.debug(' delete these CH ' + chDeleteIds);
+        List<Client_Host__c> chList = new List<Client_Host__c> ([select id, name,CampaignMember_ID__c,User__c from Client_Host__c where id IN: chDeleteIds]);
+        
+        /*  if(chDeleteIds.size() > 0 ){
+for(Id chid : chDeleteIds){
+Client_Host__c ch = new Client_Host__c();
+ch.id = chid;
+chList.add(ch);
+}
+}*/
+        try{
+            delete chList;
+            success='Successfully Deleted';
+            system.debug(' ClientHostTriggerHandler.afterDeleteDone ' + ClientHostTriggerHandler.afterDeleteDone);
+            if(! ClientHostTriggerHandler.afterDeleteDone){
+                system.debug(' delete chList; ' + chList);
+                ClientHostTriggerHandler.afterDeleteDone= true;
+                ClientHostTriggerHandler.sendDeletEmailAlert(chList);
+            }
+            
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        return success;
+    }
+    
+    // Commented by Shweta Meshram for story #170078430 to remove rendering condn for 'Create New' button and 'Sync_To_BrightSpot ' field on Create New, Detail, Edit, Clone. 
+    /*@AuraEnabled
+    public static List<String> checkUserGroup() {
+        List<String> checkUserGrp = new List<String>();
+        List<String> allGroupIDs = new List<String>();
+        for (GroupMember gm : [SELECT Id,group.name  FROM GroupMember where UserOrGroupId =: UserInfo.getUserId() AND group.type='Regular']){
+            allGroupIDs.add(gm.group.name);
+        }   
+        for(String grpName : allGroupIDs){            
+            if(grpName == 'Skuid Access - Trade Contact List')
+                checkUserGrp.add('Skuid Access - Trade Contact List');                                 
+            if(grpName == 'Skuid Access – Modify All TCL')
+                checkUserGrp.add('Skuid Access – Modify All TCL');            
+        }                              
+        return checkUserGrp;       
+    } */ 
+    @AuraEnabled
+    public static List<String> getFieldLabel(String objName,String emptyFields) {
+        
+        List<String> retLabels = new List<String>();        
+        List<String> emptyFieldList = emptyFields.split(' ');
+        Schema.DescribeSObjectResult[] descResult = Schema.describeSObjects(new String[]{objName});        
+        Map<String,Schema.SObjectField> fieldsMap = descResult[0].fields.getMap();
+        for(String str : emptyFieldList)      {
+            retLabels.add(fieldsMap.get(str).getDescribe().getLabel());
+        }
+        
+        return retLabels;
+    }
+    
+    
+    @AuraEnabled
+    public static Boolean issyncToBrightspt(id campaignId){
+        Campaign cm = [SELECT Sync_To_BrightSpot__c FROM Campaign where id =: campaignId limit 1];
+        return cm.Sync_To_BrightSpot__c;
+    }
+    
+    @AuraEnabled
+    public static List<CampaignShare> getUsers(id campaignId){
+        List<Campaign> cm = [select Event_Lead__c,PSM_Lead__c,OwnerId from Campaign where id =:campaignId ];
+        system.debug('cam '+cm);
+        List<id> ids= new List<id> ();
+        for(Campaign a: cm){
+            if(a.Event_Lead__c!=null)
+                ids.add(a.Event_Lead__c);
+            if(a.PSM_Lead__c!=null)
+                ids.add(a.PSM_Lead__c);
+            if(a.OwnerId!=null)
+                ids.add(a.OwnerId);
+        }
+        system.debug('userIds '+ids);
+        List<CampaignShare> cs = [select id,Campaignid,UserOrGroup.name from CampaignShare where Campaignid =:campaignId and (UserOrGroupId not in : ids)];
+        List<CampaignShare> names = new List<CampaignShare>();
+        for(CampaignShare cc : cs){
+            if(!(cc.UserOrGroup.name=='Skuid Access – Modify All TCL'))
+                names.add(cc);
+        }
+        return names;    
+    }
+    
+    @AuraEnabled
+    public static Permissions checkPermissions(id campaignId){
+        Permissions permission = new Permissions();
+        Boolean hasCampaignShare, isSystemAdmin, modifyAllTCL = false, TCLGrpMember = false;
+        
+        List<CampaignShare> campaignShares= [SELECT id FROM CampaignShare where UserOrGroupId =: UserInfo.getUserId() AND CampaignId =:campaignId];
+        hasCampaignShare = campaignShares.isEmpty()?false:true;
+        
+        List<Profile> sysAdmin = [SELECT id from profile where id= :UserInfo.getProfileId() AND name ='System Administrator'];
+        isSystemAdmin = sysAdmin.isEmpty()?false:true;
+        
+        List<GroupMember> modifyAllMembers = [SELECT Id  FROM GroupMember where UserOrGroupId =: UserInfo.getUserId() AND group.type='Regular' AND group.name='Skuid Access – Modify All TCL'];
+        modifyAllTCL = modifyAllMembers.isEmpty()?false:true;
+        
+        List<GroupMember> TCLAccess = [SELECT Id  FROM GroupMember where UserOrGroupId =: UserInfo.getUserId() AND group.type='Regular' AND group.name='Skuid Access - Trade Contact List'];
+        TCLGrpMember = TCLAccess.isEmpty()?false:true;
+        
+        Campaign thisCampaign = [select id, Event_Lead__c, PSM_Lead__c, OwnerId from Campaign where id = :campaignId];
+        // Commented by Shweta Meshram for story #170078430 to remove rendering condn for Edit, Clone and Mass Update buttons. 
+        /*if(hasCampaignShare||isSystemAdmin||modifyAllTCL){
+            permission.editAccess = true;
+            permission.cloneAccess = true;
+            permission.massUpdate = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove Public group rendering condn for Edit, Clone and Mass Update buttons. 
+        if(hasCampaignShare||isSystemAdmin){
+            permission.editAccess = true;
+            permission.cloneAccess = true;
+            permission.massUpdate = true;
+        }
+        // Commented by Shweta Meshram for story #170078430 to remove rendering condn for Delete button.
+        /*if(hasCampaignShare||modifyAllTCL){
+            permission.deleteAccess = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove Public group rendering condn for Delete button.
+        if(hasCampaignShare){
+            permission.deleteAccess = true;
+        }
+        // Commented by Shweta Meshram for story #170078430 to remove Public group rendering condn for Mass Delete button.
+        /*if(isSystemAdmin || modifyAllTCL)
+            permission.deleteActn = true;*/
+        // Added by Shweta Meshram for story #170078430 to remove Public group rendering condn for Mass Delete button.
+        if(isSystemAdmin)
+            permission.deleteActn = true;
+        
+        if(modifyAllTCL)
+            permission.modifyAllAccess = true;
+        
+        // Commented by Shweta Meshram for story #170078430 to remove public Group rendering condn for Share button.
+        /*if(thisCampaign.OwnerId == UserInfo.getUserId() || isSystemAdmin || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId() || modifyAllTCL){
+            permission.shareAccess = true;
+        }*/
+        
+        // Added by Shweta Meshram for story #170078430 to remove public Group rendering condn for Share button.
+        if(thisCampaign.OwnerId == UserInfo.getUserId() || isSystemAdmin || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId()){
+            permission.shareAccess = true;
+        }
+        //Commented by Shweta Meshram for story #170078430 to remove public Group rendering condn for Mass Approve button.
+        /*if(thisCampaign.OwnerId == UserInfo.getUserId() || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId() || modifyAllTCL){
+            permission.approveRejectActn = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove public Group rendering condn for Mass Approve button.
+        if(thisCampaign.OwnerId == UserInfo.getUserId() || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId()){
+            permission.approveRejectActn = true;
+        }
+        // Commented by Shweta Meshram for story #170078430 to remove public Group rendering condn for AddNewListMembers button.
+        //Check access for 'Add New List Member(s)' button on List Members tab
+        /*if(isSystemAdmin || modifyAllTCL || TCLGrpMember || hasCampaignShare){
+            permission.AddNewListMemberAccess = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove public Group rendering condn for AddNewListMembers button.
+        if(isSystemAdmin || hasCampaignShare){
+            permission.AddNewListMemberAccess = true;
+        }
+        return permission;
+    }
+    
+    public class Permissions{
+        @AuraEnabled public boolean editAccess = false;
+        @AuraEnabled public boolean cloneAccess = false; 
+        @AuraEnabled public boolean deleteAccess = false;
+        @AuraEnabled public boolean shareAccess = false;
+        @AuraEnabled public boolean AddNewListMemberAccess = false;
+        @AuraEnabled public boolean massUpdate = false;
+        @AuraEnabled public boolean approveRejectActn = false;
+        @AuraEnabled public boolean deleteActn = false;
+        @AuraEnabled public boolean modifyAllAccess = false;
+    }
+    
+    @AuraEnabled
+    public static boolean deleteCampaign(id campaignId){
+        List <Id> cmId = new List<Id>();
+        for(CampaignMember cm : [select id from CampaignMember where CampaignId =: campaignId])
+            cmId.add(cm.id);
+        
+        List <Client_Host__c> chList = new List<Client_Host__c>([Select id from Client_Host__c where CampaignMember_ID__c IN: cmId ]);
+        
+        /*for(Client_Host__c ch:[select id,IsCampaignDelete__c from Client_Host__c where CampaignMember_ID__c IN: cmId]){
+ch.IsCampaignDelete__c = true;
+chList.add(ch);
+}*/
+        system.debug(' CHList Size before delete  ' + chList.size());
+        try{
+            // update chList;
+            delete chList;
+        }catch(Exception e){
+            system.debug('Error in deleting client host');
+        }
+        system.debug(' CMList Size ' + cmId.size());
+        system.debug(' CHList Size after delete' + chList.size());
+        
+        try{
+            delete [select id from campaign where id = :campaignId];			
+        }
+        catch(Exception e){
+            return false;
+        }		
+        
+        return true;
+    }
+    
+    @AuraEnabled
+    public static boolean shareCampaign(id campaignId,id ShareCampaignUserId){
+        try{
+            CampaignShare  camShare = new CampaignShare( CampaignId =campaignId, UserOrGroupId =ShareCampaignUserId, CampaignAccessLevel = 'Edit');            
+            insert camShare;
+        } catch(Exception e){
+            return false;
+        }        return true;
+    }
+    
+    @AuraEnabled
+    public static List<String> getRecordTypes(){
+        List<String> recType = new List<String>();
+        List<RecordType> recTypeList = [SELECT id,Name FROM RecordType where SobjectType='Contact' AND IsActive=true 
+                                        AND (Name='Strategic' OR Name='Internal Contacts' OR Name='Others')];
+        for(RecordType rt : recTypeList){
+            recType.add(rt.name);
+        }
+        return recType;
+    }
+    
+    @AuraEnabled
+    public static boolean rowAction(String rowActn,String campMemId){
+        CampaignMember cm = [SELECT id,name,Approval_status__c,Client_Host__c from CampaignMember  where id = : campMemId limit 1];
+        
+        List <Client_Host__c> chList = new List <Client_Host__c>([ Select id, Name, CampaignMember_ID__c, User__c,uniqueCode__c 
+                                                                  from Client_Host__c where CampaignMember_ID__c =:campMemId]);
+        
+        System.debug(rowActn +'-----------------'+cm);
+        System.debug('chList ' +'-----------------'+chList.size());
+        
+        
+        if(rowActn=='Approve')
+            cm.Approval_status__c = 'Approved';
+        else if(rowActn == 'Reject')
+            cm.Approval_status__c = 'Not Approved';
+        /* else if(rowActn=='Delete'){
+try{
+delete cm;
+return true;
+}catch(Exception e){                System.debug(e.getMessage()+' '+e.getStackTraceString());                return false;
+}
+}*/
+        
+        if(rowActn=='Approve' || rowActn=='Reject'){
+            Database.SaveResult SR =Database.update(cm);
+            if(SR.isSuccess())
+                return true;
+            else
+                return false;
+        }        return false;
+    }
+    
+    //  **** Replaced by the below Mass Action as a part of Enhancement # 169192296 On 20/11/2019 by Joel Dcruz *****
+    /*  @AuraEnabled
+public static boolean massAction(String massActn,List<String> campMemIds){
+List<Id> campMemIdList = new List<Id>();
+for(String str : campMemIds)
+campMemIdList.add(str.removeStart('\'').removeEnd('\''));
+
+system.debug('campMemIds  '+campMemIdList);
+List<CampaignMember> cmList = [SELECT id,name,Approval_status__c from CampaignMember  where id IN : campMemIdList ];
+List<CampaignMember> massActnList = new List<CampaignMember>(); 
+System.debug(massActn +'-----------------'+cmList);
+if(massActn=='Approve'){
+for(CampaignMember campMem: cmList){
+campMem.Approval_status__c = 'Approved';
+massActnList.add(campMem);
+}
+}         
+else if(massActn == 'Reject'){
+for(CampaignMember campMem: cmList){
+campMem.Approval_status__c = 'Not Approved';
+massActnList.add(campMem);
+} 
+}            
+else if(massActn=='Delete'){
+for(CampaignMember campMem: cmList)
+massActnList.add(campMem);
+}                
+
+if(massActn=='Approve' || massActn=='Reject'){
+Database.SaveResult[] srList = Database.update(massActnList, false);
+for (Database.SaveResult sr : srList) {
+if (sr.isSuccess()) {
+// Operation was successful, so get the ID of the record that was processed
+System.debug('Successfully inserted account. Account ID: ' + sr.getId());
+return true;
+}
+else {
+// Operation failed, so get all errors                
+for(Database.Error err : sr.getErrors()) {
+System.debug('The following error has occurred.');                    
+System.debug(err.getStatusCode() + ': ' + err.getMessage());
+System.debug('Account fields that affected this error: ' + err.getFields());
+}                    return false;
+}
+}
+} 
+else if(massActn=='Delete'){
+Database.deleteResult[]  delResList = Database.delete(massActnList, false);
+for (Database.deleteResult del : delResList) {
+if (del.isSuccess()) {
+// Operation was successful, so get the ID of the record that was processed
+System.debug('Successfully inserted account. Account ID: ' + del.getId());
+return true;
+}
+else {
+// Operation failed, so get all errors                
+for(Database.Error err : del.getErrors()) {
+//System.debug('The following error has occurred.');                    
+//System.debug(err.getStatusCode() + ': ' + err.getMessage());
+System.debug('Account fields that affected this error: ' + err.getFields());    } return false;
+}
+}
+}
+
+return false;
+} */
+    
+    @AuraEnabled
+    public static boolean massAction(String massActn,List<String> campMemIds,String loggedInUser){ // List<String> flaggedCM
+        Set<Id> campMemIdList = new Set<Id>();
+        Map<Id,List<Client_Host__c>> ExistingCMHostMap = new Map<Id,List<Client_Host__c>>();
+        
+        //    List<CampaignMember> delCms = new List<CampaignMember>([Select id, name from CampaignMember where id IN: flaggedCM]);
+        System.debug('massActn  '+ massActn + ' campMemIds ' + campMemIds);
+        
+        
+        for(String str : campMemIds)
+            campMemIdList.add(str.removeStart('\'').removeEnd('\''));
+        
+        //Added By Joel... 14/11/2019       
+        system.debug('campMemIds  '+campMemIdList);
+        List<CampaignMember> cmList = [SELECT id,name,Approval_status__c,Flag_for_Deletion__c,Deletion_Approved__c,Flagged_for_Deletion_User__c,Flagged_for_Deletion_By_User__c 
+                                       from CampaignMember where id IN : campMemIdList ];
+        
+        List <Client_Host__c> chList = new List <Client_Host__c>([ Select id, Name, CampaignMember_ID__c, User__c,uniqueCode__c 
+                                                                  from Client_Host__c where CampaignMember_ID__c =:campMemIdList]);
+        integer counter=0;
+        if(chList.size() > 0){
+            for(Id cmId : campMemIdList){
+                for(Client_Host__c ch : chList ){
+                    counter++;
+                    // System.debug(' CMwithHostMap ' + ExistingCMHostMap + ' counter '+counter);
+                    if(! ExistingCMHostMap.containsKey(cmId)){
+                        ExistingCMHostMap.put(cmId, new List<Client_Host__c>());
+                    }
+                    if( ExistingCMHostMap.containsKey(cmId) && cmId == ch.CampaignMember_ID__c) {
+                        ExistingCMHostMap.get(cmId).add(ch);
+                    } 
+                }
+                System.debug(' CMwithHostMap ' + cmId + ' Values size '+ ExistingCMHostMap.get(cmId).size());  
+            }
+        }
+        
+        System.debug(' ExistingCMHostMap.keySet() ' + ExistingCMHostMap.keySet() + ' Final counter '+counter);
+        // System.debug(' CMwithHostMap ' + ExistingCMHostMap.keySet() + ' Values '+ ExistingCMHostMap.Values());
+        
+        
+        //Ends
+        
+        List<CampaignMember> massActnList = new List<CampaignMember>(); 
+        List<CampaignMember> flagForDeletion = new List<CampaignMember>();  
+        
+        System.debug(massActn +'-----------------'+cmList);
+        if(massActn=='Approve'){
+            for(CampaignMember campMem: cmList){
+                campMem.Approval_status__c = 'Approved';
+                massActnList.add(campMem);
+            }
+        }         
+        else if(massActn == 'Reject'){
+            for(CampaignMember campMem: cmList){
+                campMem.Approval_status__c = 'Not Approved';
+                massActnList.add(campMem);
+            } 
+        }            
+        else if(massActn=='Delete'){
+            for(CampaignMember campMem: cmList){
+                if( ExistingCMHostMap.containsKey(campMem.Id)){
+                    if( ExistingCMHostMap.get(campMem.Id).size() > 1 ){
+                        System.debug(' CM with CH size--- ' + ExistingCMHostMap.get(campMem.Id).size() + ' LoggedInUser ' + loggedInUser);
+                        if( campMem.Flagged_for_Deletion_User__c == null){
+                            campMem.Flagged_for_Deletion_User__c = loggedInUser;
+                            campMem.Flagged_for_Deletion_By_User__c = loggedInUser;
+                        }                        		
+                        campMem.Flag_for_Deletion__c = true;
+                        campMem.Deletion_Rejected__c = false;
+                        flagForDeletion.add(campMem); 
+                        system.debug('in delete mass action'+ flagForDeletion);
+                    } 
+                    else if(! campMem.Flag_for_Deletion__c == true) massActnList.add(campMem); 
+                }  
+                else  massActnList.add(campMem);
+            }
+        } 
+        
+        if(massActn=='Approve' || massActn=='Reject'){
+            Database.SaveResult[] srList = Database.update(massActnList, false);
+            for (Database.SaveResult sr : srList) {
+                if (sr.isSuccess()) {
+                    // Operation was successful, so get the ID of the record that was processed
+                    System.debug('Successfully inserted account. Account ID: ' + sr.getId());
+                    return true;
+                }
+                else {
+                    // Operation failed, so get all errors                
+                    for(Database.Error err : sr.getErrors()) {
+                        System.debug('The following error has occurred.');                    
+                        System.debug(err.getStatusCode() + ': ' + err.getMessage());
+                        System.debug('Account fields that affected this error: ' + err.getFields());
+                    }                    return false;
+                }
+            }
+        } 
+        else if(massActn=='Delete'){
+            Set<Id> delCM = new Set <Id>();
+            if(massActnList.Size() > 0){
+                Database.deleteResult[]  delResList = Database.delete(massActnList, false);
+                for (Database.deleteResult del : delResList) {
+                    if (del.isSuccess()) {
+                        // Operation was successful, so get the ID of the record that was processed
+                        System.debug('Successfully deleted: ' + del.getId());
+                        delCM.add(del.getId());
+                    }
+                    else {
+                        // Operation failed, so get all errors                
+                        for(Database.Error err : del.getErrors()) {
+                            //System.debug('The following error has occurred.');                    
+                            //System.debug(err.getStatusCode() + ': ' + err.getMessage());
+                            System.debug('Account fields that affected this error: ' + err.getFields());    } return false;
+                    }
+                }
+            }
+            List <Client_Host__c> delCHLIst = [Select id, Name from Client_Host__c where CampaignMember_ID__c IN:delCM ];
+            System.debug('Delete these CH ' + delCHLIst);
+            
+            try{
+                delete delCHLIst;
+            }catch(Exception e){
+                System.debug('delCHLIs failed '+ e.getStackTraceString());
+            }
+            
+            System.debug(' Flagged for Deletion ' + flagForDeletion );
+            if (flagForDeletion.size() > 0 ){
+                try{
+                    update flagForDeletion;
+                    return true;
+                }Catch(Exception e){
+                    System.debug('flagForDeletion update failed '+ e.getStackTraceString());
+                    return false;
+                }
+            }
+            if (delCM.size() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    
+    @AuraEnabled
+    public static String massUpdateCampaignMembers(CampaignMember rec,List<String> selectedRowIDs, String fieldsToQuery){
+        system.debug('selectedRowIDs '+selectedRowIDs);
+        List<CampaignMember> lstCampaignMember = new List<CampaignMember>();
+        List<CampaignMember> lstCampaignMemberToUpdate = new List<CampaignMember>();
+        String msg='';
+        try {
+            String query = 'Select  Id '+fieldsToQuery+ ' from CampaignMember';
+            query+= ' Where Id IN (' + String.join(selectedRowIDs, ',') + ')';           
+            system.debug(query);
+            if (String.isNotBlank(fieldsToQuery)) {
+                system.debug('Test');
+                lstCampaignMember = Database.query(query);  
+                system.debug(lstCampaignMember);
+            }
+            for (CampaignMember cm : lstCampaignMember) {
+                if (fieldsToQuery.contains('Rank__c')) {
+                    cm.Rank__c = rec.Rank__c;
+                }
+                if(fieldsToQuery.contains('Approval_status__c')){
+                    if(cm.Approval_status__c == 'Approved' && rec.Approval_status__c == 'Approved'){
+                        msg = 'You cannot Approve already Approved record.';
+                        return msg;
+                    }
+                    else if(cm.Approval_status__c == 'Approved' && rec.Approval_status__c == 'Waiting Approval'){
+                        msg = 'You cannot change status of Approved Record to Waiting Approval.';
+                        return msg;
+                    }
+                    else
+                        cm.Approval_status__c = rec.Approval_status__c;                    
+                }
+               
+                if (fieldsToQuery.contains('Invited__c')) {
+                    cm.Invited__c = rec.Invited__c;
+                }
+                if (fieldsToQuery.contains('Response__c')) {
+                    cm.Response__c = rec.Response__c;
+                }
+                if (fieldsToQuery.contains('Attended__c')) {
+                    cm.Attended__c = rec.Attended__c;
+                }
+                if (fieldsToQuery.contains('Cancelled__c')) {
+                    cm.Cancelled__c = rec.Cancelled__c;
+                }
+                if (fieldsToQuery.contains('No_Show__c')) {
+                    cm.No_Show__c = rec.No_Show__c;
+                }
+                if (fieldsToQuery.contains('Walk_In__c')) {
+                    cm.Walk_In__c = rec.Walk_In__c;
+                }
+                if(fieldsToQuery.contains('Sync_To_BrightSpot__c')){
+                    cm.Sync_To_BrightSpot__c = rec.Sync_To_BrightSpot__c;
+                }
+                if(fieldsToQuery.contains('Last_Sync_With_BS__c')){
+                    cm.Last_Sync_With_BS__c = rec.Last_Sync_With_BS__c;
+                }
+                if (fieldsToQuery.contains('Attendee_Group__c')) {
+                    cm.Attendee_Group__c = rec.Attendee_Group__c;
+                }
+                if (fieldsToQuery.contains('Attendee_Sub_Group__c')) {
+                    cm.Attendee_Sub_Group__c = rec.Attendee_Sub_Group__c;
+                }
+                if (fieldsToQuery.contains('Invited_By_Agency__c')) {
+                    cm.Invited_By_Agency__c = rec.Invited_By_Agency__c;
+                }
+                lstCampaignMemberToUpdate.add(cm);
+            }
+            if(lstCampaignMemberToUpdate.size() > 0) {
+                update lstCampaignMemberToUpdate; 
+            }
+            return 'SUCCESS';
+        }
+        catch (Exception ex) {
+            return ex.getMessage();
+        }
+    }    
+    
+    @AuraEnabled
+    public static Object getListMembers(Id campaignId){
+        List<sObject> lstObjects;
+        if(campaignId != null){
+            lstObjects = [Select Id, Full_Name__c,Contact.Title,Contact.Account.Name,Contact.RecordType.Name,Client_Host__c,Email,Rank__c,Approval_status__c,Invited__c,
+                          Response__c,Attended__c,Cancelled__c,No_Show__c,Walk_In__c,Sync_To_BrightSpot__c,Last_Sync_With_BS__c,
+                          Attendee_Group__c,Attendee_Sub_Group__c,Invited_By_Agency__c,ContactId,Contact.Vertical_s__c from CampaignMember where CampaignId=: campaignId and 
+                          (Contact.RecordType.Name='Strategic' OR Contact.RecordType.Name='Internal Contacts' 
+                           OR Contact.RecordType.Name='Others')];
+        } 
+        GenericListView.DataTable data = (GenericListView.DataTable) GenericListView.getData('CampaignMember', lstObjects, null, null, null);
+        return data;
+    }
+    
+    @AuraEnabled
+    public static List<campaignHistoryWrapper> getCampaignHistory(String campaignId){
+        List<campaignHistoryWrapper> historyWrapperList = new List<campaignHistoryWrapper>();
+        List<CampaignHistory> campHistList = new List<CampaignHistory>();
+        campHistList = [SELECT CreatedDate,Field, CreatedBy.name,OldValue, NewValue FROM CampaignHistory where CampaignId =: campaignId];
+        
+        for(CampaignHistory campHistory : campHistList)   {
+            historyWrapperList.add(new campaignHistoryWrapper(campHistory));
+        }                     
+        return historyWrapperList;
+    }
+    
+    public class campaignHistoryWrapper{
+        @AuraEnabled public String createdDate;
+        @AuraEnabled public String field;
+        @AuraEnabled public String createdBy;
+        @AuraEnabled public String oldValue;
+        @AuraEnabled public String newValue;       
+        public campaignHistoryWrapper(CampaignHistory campHist){
+            this.createdDate = String.valueOf((campHist.CreatedDate.date()));
+            
+            try{
+                if(campHist.Field!=null && campHist.Field!='')
+                    this.field = Schema.getGlobalDescribe().get('Campaign').getDescribe().fields.getMap().get(String.valueOf(campHist.Field)).getDescribe().getLabel();
+            }
+            catch(Exception e){ 
+                system.debug('Error '+e.getMessage());
+            }
+            if(campHist.Field == 'created'){
+                this.field = campHist.Field;
+            }
+            this.createdBy = campHist.CreatedBy.name;
+            if(campHist.Field=='StartDate' || campHist.Field=='EndDate'){
+                this.oldValue = String.valueOf(campHist.OldValue);
+                this.newValue = String.valueOf(campHist.NewValue);
+            }else{
+                this.oldValue = (String)campHist.OldValue;
+                this.newValue = (String)campHist.NewValue;    
+            }
+            
+        }
+    } 
+    
+    @AuraEnabled
+    public static boolean deleteCampaignShareUsers(Id campaignId){
+        try{
+            delete [select id from CampaignShare where id = :campaignId];
+        } catch(Exception e){            return false;
+                            }
+        return true;
+    }
+    
+    @AuraEnabled
+    public static String cloneTCL(String recId, String Name, String type, Date sdate, Date edate, String status, Boolean sync,
+                                  Boolean auto, String eLead, String pLead, String vertical, String prop, String descr,String clientHostAssociated){
+                                      
+                                      
+                                      
+                                      Campaign cam = [SELECT IsDeleted, Name, type, RecordTypeId, Status, StartDate, EndDate, CurrencyIsoCode, 
+                                                      ExpectedRevenue, BudgetedCost, ActualCost, ExpectedResponse, NumberSent, IsActive, Description, NumberOfLeads,
+                                                      NumberOfConvertedLeads, NumberOfContacts, NumberOfResponses, NumberOfOpportunities, NumberOfWonOpportunities,
+                                                      AmountAllOpportunities, AmountWonOpportunities, 
+                                                      CampaignMemberRecordTypeId, Primary_Activation__c, Description__c, Properties__c, Type__c, Vertical__c, 
+                                                      Event_Lead__c, PSM_Lead__c, ShareCampaignUser__c, Attendance_Cost__c, Attendee_Notes__c, Description_Rich__c, 
+                                                      Event_link__c, Fee__c, Key_Contacts__c, Key_Speakers__c, Location__c, Partner_Name__c, Restrictions__c, 
+                                                      Auto_Approve__c, Brightspot_Event_ID__c, Last_Sync_With_BS__c, Sync_To_BrightSpot__c, TrackCampaginMembers__c,Will_Client_Hosts_need_to_be_associated__c
+                                                      FROM Campaign where Id =:recId];
+                                      
+                                      List<CampaignMember> camMember = [SELECT IsDeleted, CampaignId, LeadId, ContactId, Contact.Marked_for_Deletion__c, Status, HasResponded, FirstRespondedDate, 
+                                                                        CurrencyIsoCode, Salutation, Name, FirstName, LastName, Title, Street, City, State, PostalCode,
+                                                                        Country, Email, Phone, Fax, MobilePhone, Description, DoNotCall, HasOptedOutOfEmail, 
+                                                                        HasOptedOutOfFax, LeadSource, CompanyOrAccount, Type, LeadOrContactId, LeadOrContactOwnerId, 
+                                                                        Attended__c, Walk_In__c, Rank__c, No_Show__c, Full_Name__c, Invited__c, Response__c, Cancelled__c,
+                                                                        Campaign_Member_18_Digit_ID__c, Presenter__c, Approval_status__c, Attendee_Group__c, 
+                                                                        Attendee_Sub_Group__c, Company__c, Invited_By_Agency__c, Last_Sync_With_BS__c, NBCU_Contact__c, 
+                                                                        Sync_To_BrightSpot__c,Client_Host__c FROM CampaignMember where CampaignId=:recId];
+                                      
+                                      
+                                      Campaign cloneCam = cam.clone(false, true, false, false);
+                                      cloneCam.Name = Name;
+                                      cloneCam.Type = type;
+                                      cloneCam.StartDate = sdate;
+                                      cloneCam.EndDate = edate;
+                                      cloneCam.Status = status;
+                                      cloneCam.Sync_To_BrightSpot__c = cam.Sync_To_BrightSpot__c;
+                                      cloneCam.Auto_Approve__c = auto;
+                                      cloneCam.Vertical__c = vertical;
+                                      cloneCam.Properties__c = prop;                             
+                                      cloneCam.Description = descr;
+                                      cloneCam.Will_Client_Hosts_need_to_be_associated__c = clientHostAssociated;
+                                      
+                                      try{
+                                          insert cloneCam;
+                                          System.debug('Success>> '+cloneCam.Id);
+                                      }catch(Exception e){
+                                          System.debug('Error>> '+e.getMessage());
+                                          return null;
+                                      }
+                                      Map<Id,CampaignMember> cloneCamMemMap = new Map<Id,CampaignMember>();
+                                      
+                                      for(CampaignMember originalCM:camMember){
+                                          CampaignMember newCM = originalCM.clone(false,true,false,false);
+                                          newCM.CampaignId = cloneCam.Id;                                          
+                                          if(newCM.Contact.Marked_for_Deletion__c==false)
+                                              cloneCamMemMap.put(originalCM.Id,newCM);
+                                      }
+                                      try{
+                                          insert cloneCamMemMap.values();
+                                      }catch(Exception e){
+                                          System.debug('member Error>> '+e.getMessage());
+                                          return cloneCam.Id;
+                                      }
+                                      
+                                      //clone client host
+                                      
+                                      List <Client_Host__c> CHList = new List <Client_Host__c>();
+                                      
+                                      for(Client_Host__c ch: [select id, User__c, CampaignMember_ID__c, name, User_Name__c, Campaign_Member_Name__c FROM Client_Host__c where CampaignMember_ID__c IN:cloneCamMemMap.keySet()]) {
+                                          system.debug('hey inside client host loop'+ch.Campaign_Member_Name__c+' '+ch.User_Name__c);
+                                          
+                                          Client_Host__c clonedCH = ch.clone(false,true,false,false);
+                                          clonedCH.CampaignMember_ID__c = cloneCamMemMap.get(ch.CampaignMember_ID__c).id; 
+                                          CHList.add(clonedCH);
+                                      }
+                                      try{
+                                          insert CHList;									                                                                        
+                                      }catch(Exception e){
+                                          System.debug('client host Error>> '+e.getMessage());
+                                      }								                                                            
+                                      return cloneCam.Id;
+                                  }
+}
+***************************************************************************************************************************************************************************************
+TEST CLASS:		TestTradeContactList
+***************************************************************************************************************************************************************************************
+@istest(seeAlldata=false)
+public class TestTradeContactList {
+    @isTest static void testAEIntegration(){
+      
+        User u = new User();
+        u.FirstName = 'Test';
+        u.LastName = 'User';
+        u.ProfileId = UserInfo.getProfileId();
+        u.Email = 'testuser@nbcuni.com';
+        u.Username = 'test123user@nbcuni.com.rtsdev';
+        u.Type__c = 'Ad Sales';
+        u.TimeZoneSidKey = 'America/New_York';
+        u.Alias = 'tuser' ;
+        u.LocaleSidKey = 'en_US';
+        u.EmailEncodingKey = 'ISO-8859-1';
+        u.LanguageLocaleKey  = 'en_US';
+        u.FederationIdentifier = '123345' ;
+        u.SSO__c  = '123245';
+        insert u;
+        
+        Contact con=new Contact();
+        con.LastName='cfcdfcsdfsdfc';
+        con.Marked_for_Deletion__c=false;
+        con.Legacy_ID__c='@1212ABC';
+        con.CopyRecordTypeEmail__c='abc@123';
+        insert con;
+        
+      
+        
+        Campaign cmp=new Campaign();
+        cmp.Name='Test Campaign 1';
+        cmp.Event_Lead__c=UserInfo.getUserId(); 
+        cmp.PSM_Lead__c=UserInfo.getUserId();
+        cmp.Will_Client_Hosts_need_to_be_associated__c='Yes';
+        Insert cmp; 
+         system.debug('cmp'+cmp);
+        
+        Group gpr = new group();
+        gpr.name='Skuid Access - Trade Contact List';
+         gpr.type='Regular';
+        insert gpr;
+        
+        Campaign cmp1=new Campaign();
+        cmp1.Name='Test Campaign 11';
+        cmp1.Event_Lead__c=UserInfo.getUserId();      
+        cmp1.OwnerId=UserInfo.getUserId();
+        insert cmp1;
+         cmp1.PSM_Lead__c=UserInfo.getUserId();
+        update cmp1;
+        
+        System.runAs ( new User(Id = UserInfo.getUserId()) ) {
+            GroupMember gm=new GroupMember();
+            gm.UserOrGroupId = UserInfo.getUserId() ;
+            gm.GroupId=gpr.Id;
+            //gm.Group.type='Regular';
+            insert gm;
+        }
+        
+        
+        
+        CampaignMember cMem=new CampaignMember();
+        cMem.ContactId=con.Id;
+        cMem.Approval_status__c='Approved';
+        cMem.CampaignId=cmp1.id;
+        insert cMem;
+        
+        CampaignMember cMem1=new CampaignMember();
+        cMem1.ContactId=con.Id;
+        cMem1.Approval_status__c='Approved';
+        cMem1.CampaignId=cmp.id;
+        cMem1.Flagged_for_Deletion_User__c='Test';
+        cMem1.Rank__c='A-list';
+        cMem1.Attended__c=true;
+        cMem1.Cancelled__c=true;
+        cMem1.Response__c='Yes';
+        cMem1.Approval_status__c='Approved';
+        cMem1.Invited__c=true;
+        insert cMem1;
+        
+        Campaign cmp2=new Campaign();
+        cmp2.Name='Test Campaign 12';        
+        Insert cmp2; 
+        system.debug('cm2'+cmp2);
+        
+        CampaignMember cMem2=new CampaignMember();
+        cMem2.ContactId=con.Id;
+        cMem2.Approval_status__c='Approved';
+        cMem2.CampaignId=cmp2.id;
+        insert cMem2;
+        
+        String[] cm = new String[]{cMem1.Id,cMem2.Id};
+        
+        CampaignShare cshare=new CampaignShare();
+        cshare.CampaignAccessLevel='Edit';
+        cshare.CampaignId=cmp.Id;
+        cshare.UserOrGroupId=u.Id;
+        insert cshare;
+        
+        CampaignHistory chis=new CampaignHistory();
+        //chis.name='Test';
+        chis.CampaignId=cmp.id;
+        chis.Field= 'StartDate';
+       // chis.NewValue=System.today();
+        //chis.OldValue=System.today()+1;
+        insert chis;
+        
+        CampaignHistory chis1=new CampaignHistory();
+        chis1.CampaignId=cmp.id;
+        chis1.Field= 'Name';
+        insert chis1;
+        
+          List<String> MyList = new List<String> {'Type__c', 'Vertical__c', 'Status', 'BBB', 'CCC'};
+            Map<String,String> fields=new Map<String,String>{'KeyValueA' => 'Type__c', 
+                'KeyValueB' => 'Vertical__c', 
+                'KeyValueC' => 'Status'};
+                    TCL_Create_ctrl obbj=new TCL_Create_ctrl();
+        TCL_Create_ctrl.checkUserGroup();
+        TCL_Create_ctrl.getRecordTypes();
+        TCL_Create_ctrl.checkPermissions(cmp1.Id);
+        TCL_Create_ctrl.getUsers(cmp.Id);
+        TCL_Create_ctrl.getListMembers(cmp.Id);
+        TCL_Create_ctrl.issyncToBrightspt(cmp.Id);
+        TCL_Create_ctrl.getFieldLabel('Campaign', 'Name');
+        TCL_Create_ctrl.rowAction('Approve', cMem.Id);      
+        TCL_Create_ctrl.rowAction('Reject', cMem1.Id);
+        TCL_Create_ctrl.rowAction('Delete', cMem1.Id);
+        TCL_Create_ctrl.cloneTCL(cmp.Id,'Clone record1', 'eBlast', System.today(), System.today(), 'Planned', true, false,UserInfo.getUserId() , UserInfo.getUserId(), 'Broadcast Entertainment', 'Bravo', 'descr','asdasd');
+        cmp.StartDate= System.today();
+        update cmp;
+        cmp.StartDate= System.today()+1; 
+        update cmp;
+        list<CampaignHistory> camphis= new List<CampaignHistory>();
+        camphis=[SELECT CreatedDate,Field, CreatedBy.name,OldValue, NewValue FROM CampaignHistory];
+        system.debug('camphis'+camphis);
+        List <String> CampaignMembersss =new List<String>();
+        String t1 = '\''+cMem1.id+'\'';
+        String t2 = '\''+cMem2.id+'\'';
+        CampaignMembersss.add(t1);
+        //CampaignMembersss.add(cMem.id);
+        CampaignMembersss.add(t2);
+        
+        Client_Host__c ch=new Client_Host__c();
+        ch.CampaignMember_ID__c=cMem1.id;
+        ch.Name='Lorenzo Harris-Neha Saini';
+        ch.CampaignMember_ID__c=cmp.Id;
+        insert ch;
+        
+        List<String> chlist = new List<String>();
+        chlist.add(ch.Id);
+        
+        String Queryfields1=',Rank__c,Invited__c,Response__c,Cancelled__c,Attended__c';
+        TCL_Create_ctrl.massUpdateCampaignMembers(cMem,CampaignMembersss, Queryfields1);
+         String Queryfields=',Rank__c,Approval_status__c,Invited__c,Response__c,Cancelled__c,Attended__c';
+        TCL_Create_ctrl.massUpdateCampaignMembers(cMem,CampaignMembersss, Queryfields);
+        TCL_Create_ctrl.shareCampaign(cmp.Id,'0050x000002POgU');
+        TCL_Create_ctrl.massAction('Approve', CampaignMembersss,'\''+ch.Id+'\'');
+        TCL_Create_ctrl.massAction('Reject', CampaignMembersss,'\''+ch.Id+'\'');
+        TCL_Create_ctrl.massAction('Delete', CampaignMembersss,'\''+ch.Id+'\'');
+       
+        TCL_Create_ctrl.getCampaignHistory(cmp.Id);       
+        TCL_Create_ctrl.deleteCampaign(cmp.Id);
+        TCL_Create_ctrl.deleteCampaignShareUsers(cmp1.Id);
+        //TCL_Create_ctrl.getClientHosts(cm);
+        TCL_Create_ctrl.getFlaggedCMUserSpecific(cmp.id,cMem1.Flagged_for_Deletion_User__c);
+        TCL_Create_ctrl.revoke(CampaignMembersss);
+        TCL_Create_ctrl.deleteApprovedCM(CampaignMembersss);
+        TCL_Create_ctrl.deleteRejectCM(CampaignMembersss);
+        TCL_Create_ctrl.deleteCHM(chlist);
+      //  TCL_Create_ctrl.getCampaignDetails(cmp.Id);
+       // TCL_Create_ctrl.campaignHistoryWrapper camhis = new TCL_Create_ctrl.campaignHistoryWrapper(chis);
+        
+        TCL_Contact_ctrl objj=new TCL_Contact_ctrl();
+        List<String> massUpdateFields;
+        Map<String,String> fields1;
+        TCL_ListViewController.getTCLCampaing();
+        //TCL_ListViewController.getFilterValues('fields1');
+        TCL_ListViewController.massUpdateFields(massUpdateFields, 'Campaign');
+        List<String> massUpdate=new List<String>();
+        
+        
+        TCL_Contact_ctrl.ContactPagerWrapper wrapper=new TCL_Contact_ctrl.ContactPagerWrapper();        
+        wrapper.totalNumberOfRows=10;  
+        
+        //********************************************
+         
+         
+        
+        
+        Client_Host__c ch123=new Client_Host__c();
+        ch123.CampaignMember_ID__c=cMem2.id;
+        ch123.Name='asd';
+        ch123.User_Name__c='wwwwwss';
+            ch123.Campaign_Member_Name__c='asd';
+        insert ch123;
+    
+        Client_Host__c ch321=new Client_Host__c();
+        ch321.CampaignMember_ID__c=cMem2.id;
+        ch321.Name='yrwuter';
+        insert ch321;
+       //delete ch321;
+        
+        //cMem.Id
+          List<String> CMIds123 = new List<String>();
+        CMIds123.add(cMem2.Id);
+      //  CMIds123.add(cMem2.Id);
+        TCL_Create_ctrl.getSelectedCMs(CMIds123);
+        
+         TCL_Create_ctrl.getCampaignDetails(cmp2.id);
+         
+		
+        
+      //  List<String> campaignMemId123 = new  List<String>{cMem123.Id};
+         //campaignMemId123.add(cMem123.Id);
+          //campaignMemId123.add(cMem321.Id);
+  //   TCL_Create_ctrl.getClientHosts(campaignMemId123); {'12345678901234567810'}
+		
+              
+        
+        
+        
+        TCL_Create_ctrl.getFlaggedCM(cMem2.Id);
+        String str1 = cMem2.Id;
+        str1 = ',' + str1 + ',';
+        system.debug('str----- ' + str1);
+        
+        String str2 = cMem2.Id;
+        str2 = ',' + str2 + ',';
+        system.debug('str----- ' + str2);
+        
+        List<String> recallCMs = new  List<String>{cMem2.Id};        
+        TCL_Create_ctrl.revoke(recallCMs);
+        
+        TCL_Create_ctrl.deleteRejectCM(recallCMs);
+        
+        
+        String[] campaignMemId123 = new String[] {str1,str2};
+        TCL_Create_ctrl.getClientHosts(campaignMemId123);
+
+        //***************************************
+    // test.stopTest();   
+    } 
+    public static testMethod void testmethod1(){
+    
+        User u = new User();
+        u.FirstName = 'Test';
+        u.LastName = 'User';
+        u.ProfileId = UserInfo.getProfileId();
+        u.Email = 'testuser@nbcuni.com';
+        u.Username = 'test123user@nbcuni.com.rtsdev';
+        u.Type__c = 'Ad Sales';
+        u.TimeZoneSidKey = 'America/New_York';
+        u.Alias = 'tuser' ;
+        u.LocaleSidKey = 'en_US';
+        u.EmailEncodingKey = 'ISO-8859-1';
+        u.LanguageLocaleKey  = 'en_US';
+        u.FederationIdentifier = '123345' ;
+        u.SSO__c  = '123245';
+        insert u;
+        
+        
+        
+        Contact con=new Contact();
+        con.LastName='Test 87987987';
+        con.Marked_for_Deletion__c=false;
+        con.Legacy_ID__c='#wew112';
+        con.CopyRecordTypeEmail__c='lkjh#223';
+        insert con;
+        
+        Campaign cmp2=new Campaign();
+        cmp2.Name='Test Campaign 12';        
+        Insert cmp2; 
+        
+        CampaignMember cMem=new CampaignMember();
+        cMem.ContactId=con.Id;
+        cMem.Approval_status__c='Approved';
+        cMem.CampaignId=cmp2.id;
+        insert cMem;
+        
+        account acc = new account();
+        acc.name='test';
+        insert acc;    
+        
+        Map<String, Object> params = new Map<String, Object>();
+        params.put('isActive',true);
+        Map<String, Object> params1 = new Map<String, Object>();
+        params1.put('tiers','');
+        Map<String, Object> params2 = new Map<String, Object>();
+        params2.put('accntName','test');
+        Map<String, Object> params3 = new Map<String, Object>();
+        params3.put('city','test');
+        Map<String, Object> params4 = new Map<String, Object>();
+        params4.put('state','test');
+         Map<String, Object> params5 = new Map<String, Object>();
+        params5.put('searchContact','test');
+        Map<String, Object> params6 = new Map<String, Object>();
+        params6.put('tiers','[Tier 1]');
+        
+        Client_Host__c ch=new Client_Host__c();
+        ch.CampaignMember_ID__c=cMem.id;
+        ch.Name='Lorenzo Harris-Neha Saini';
+        ch.User_Name__c='asd';
+        insert ch;
+        
+        List<Id> contIdList = new List<Id>();
+        contIdList.add(con.id);
+        List<Contact> contList = new List<Contact>();
+        TCL_Contact_ctrl.ContactPagerWrapper test=new TCL_Contact_ctrl.ContactPagerWrapper();
+        TCL_Contact_ctrl.getContactsCtrl('recordType',5,params);
+        TCL_Contact_ctrl.getContactsCtrl('recordType',5,params6);
+        TCL_Contact_ctrl.getContactsCtrl('recordType',5,params2);
+        TCL_Contact_ctrl.getContactsCtrl('recordType',5,params3);
+        TCL_Contact_ctrl.getContactsCtrl('recordType',5,params4);
+        TCL_Contact_ctrl.getContactsCtrl('recordType',5,params5);
+        TCL_Contact_ctrl.addNewCampMembers(cmp2.Id,contIdList,params);
+      //  TCL_Contact_ctrl.addSelectedMembers(cMem.id, contIdList, params,ch.Id);
+        TCL_Contact_ctrl.applyFilters(contList, params);
+        TCL_Contact_ctrl.applyFilters(contList, params3);
+        TCL_Contact_ctrl.contactWrapperClass conwrap= new TCL_Contact_ctrl.contactWrapperClass(con);
+        Integer rows=test.totalNumberOfRows;    
+        
+        TCL_ListMembers_DataTable_ctrl obj=new TCL_ListMembers_DataTable_ctrl();
+        // String cm='Approval_status__c=\'Waiting Approval\' AND Contact.RecordType.Name=\'Internal Contacts\'  LIMIT 10\';
+        TCL_ListMembers_DataTable_ctrl.getRecords('CampaignMember','Internals_WaitingApproval','','','10','200');
+        //TCL_ListMembers_DataTable_ctrl.getRecords('CampaignMember', 'Internals_WaitingApproval', 'null', 'filter','10','200');
+        //TCL_ListMembers_DataTable_ctrl.campaignMemberWrapperClass cmpWrap=new TCL_ListMembers_DataTable_ctrl.campaignMemberWrapperClass();
+        
+        TCL_ListMembers_DataTable_ctrl.DataTableResponse dt=new TCL_ListMembers_DataTable_ctrl.DataTableResponse();
+        /*  String camMemId=cmpWrap.camMemId;
+String name=cmpWrap.name;
+String title=cmpWrap.title;
+String accName=cmpWrap.accName;       
+String email=cmpWrap.email;       
+String rank=cmpWrap.rank;     */
+        
+        
+/*Contact con1234=new Contact();
+        con1234.LastName='wssswswswsw ssadasdasd';
+        con1234.Marked_for_Deletion__c=false;
+        con1234.Legacy_ID__c='OOASGAH@';
+        con1234.CopyRecordTypeEmail__c='gfgh@885';
+        insert con1234;
+		
+
+Campaign cmp123=new Campaign();
+        cmp123.Name='Test Campaign 12';        
+        Insert cmp123; 
+		
+CampaignMember cMem123=new CampaignMember();
+        cMem123.ContactId=con1234.Id;
+        cMem123.Approval_status__c='Approved';
+        cMem123.CampaignId=cmp123.id;
+        insert cMem123;
+        */
+        
+Client_Host__c ch123=new Client_Host__c();
+        ch123.Name='Lorenzo Harris-Neha Saini@12';
+        ch123.User_Name__c=u.name;
+        ch123.CampaignMember_ID__c=cMem.id;
+        insert ch123;
+        
+    	//delete ch123;
+
+	  Map<String, Object> params123 = new Map<String, Object>();
+        params.put('Rank','A-List');	
+        params.put('City','asd');	
+		
+		  List<Id> contIdList123 = new List<Id>();
+        contIdList123.add(con.id);
+        //contIdList123.add(con1234.id);
+        
+        
+        TCL_Contact_ctrl.addSelectedMembers(cmp2.Id,contIdList123,params123,u.Id);
+          
+     
+    }
+    public static testMethod void testmethod2(){
+        Contact con=new Contact();
+        con.LastName='Test sfkjsdhfk';
+        con.Marked_for_Deletion__c=false;
+        con.Legacy_ID__c='OOASGAH@12';
+        con.CopyRecordTypeEmail__c='uyryt@85854';
+        insert con;
+        
+        Campaign cmp2=new Campaign();
+        cmp2.Name='Test Campaign 12';        
+        Insert cmp2; 
+        
+        CampaignMember cMem=new CampaignMember();
+        cMem.ContactId=con.Id;
+        cMem.Approval_status__c='Approved';
+        cMem.CampaignId=cmp2.id;
+        insert cMem;
+        TCL_Contact_ctrl.ContactPagerWrapper test=new TCL_Contact_ctrl.ContactPagerWrapper();
+        Integer rows=test.totalNumberOfRows;    
+        
+        TCL_ListMembers_DataTable_ctrl obj=new TCL_ListMembers_DataTable_ctrl();
+        // String cm='Approval_status__c=\'Waiting Approval\' AND Contact.RecordType.Name=\'Internal Contacts\'  LIMIT 10\';
+        //TCL_ListMembers_DataTable_ctrl.getRecords('CampaignMember','Internals_WaitingApproval','cm','filter','10','2');
+        //  TCL_ListMembers_DataTable_ctrl.getRecords('CampaignMember', 'Internals_WaitingApproval', 'null', 'filter','10','2');
+        TCL_ListMembers_DataTable_ctrl.campaignMemberWrapperClass cmpWrap=new TCL_ListMembers_DataTable_ctrl.campaignMemberWrapperClass(cMem,'ListMembers');
+        TCL_ListMembers_DataTable_ctrl.DataTableResponse dt=new TCL_ListMembers_DataTable_ctrl.DataTableResponse();
+        /*  String camMemId=cmpWrap.camMemId;
+String name=cmpWrap.name;
+String title=cmpWrap.title;
+String accName=cmpWrap.accName;       
+String email=cmpWrap.email;       
+String rank=cmpWrap.rank;     */
+    }
+     public static testMethod void testmethod3(){
+        Contact con=new Contact();
+        con.LastName='Test jajaja';
+        con.Marked_for_Deletion__c=false;
+        con.Legacy_ID__c='JOASH@123'; 
+         con.CopyRecordTypeEmail__c='hhgjljl$34';
+        insert con;
+         
+        Campaign cmp2=new Campaign();
+        cmp2.Name='Test Campaign 12';        
+        Insert cmp2; 
+        
+        CampaignMember cMem=new CampaignMember();
+        cMem.ContactId=con.Id;
+        cMem.Approval_status__c='Approved';
+        cMem.CampaignId=cmp2.id;
+        insert cMem;
+        
+        Client_Host__c ch=new Client_Host__c();
+        ch.CampaignMember_ID__c=cMem.id;
+        insert ch;
+         
+        User u = new User();
+        u.FirstName = 'Test';
+        u.LastName = 'User';
+        u.ProfileId = UserInfo.getProfileId();
+        u.Email = 'testuser@nbcuni.com';
+        u.Username = 'test123user@nbcuni.com.rtsdev';
+        u.Type__c = 'Ad Sales';
+        u.TimeZoneSidKey = 'America/New_York';
+        u.Alias = 'tuser' ;
+        u.LocaleSidKey = 'en_US';
+        u.EmailEncodingKey = 'ISO-8859-1';
+        u.LanguageLocaleKey  = 'en_US';
+        u.FederationIdentifier = '123345' ;
+        u.SSO__c  = '123245';
+        insert u;
+        
+        List<Id> contIdList = new List<Id>();
+        contIdList.add(con.id);
+        
+        Map<String, Object> params = new Map<String, Object>();
+        params.put('isActive',true);
+         
+        delete ch; 
+        TCL_Contact_ctrl.getCampaignDetails(cmp2.Id);
+         TCL_Create_ctrl.getCampaignDetails(cmp2.Id);
+         TCL_Create_ctrl.getFlaggedCM(cMem.Id);
+         TCL_Contact_ctrl.addSelectedMembers(cMem.Id, contIdList, params, u.Id);
+         
+     }
+}
+
+***************************************************************************************************************************************************************************************
+COMPONENT:		TCL_CREATE.cmp
+***************************************************************************************************************************************************************************************
+
+<aura:component implements="force:appHostable,force:hasSObjectName,force:lightningQuickActionWithoutHeader,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,lightning:hasPageReference,lightning:actionOverride" 
+                access="global" extends="c:Base" controller="TCL_Create_ctrl">
+    <aura:attribute name="isOpen" type="boolean" default="false" access="global"/>
+    <aura:attribute name="error" type="Boolean" default="false" access="global"/>
+    <aura:attribute name="errMessage" type="String"  access="global"/>    
+    <aura:attribute name="isMember" type="boolean" default="false" access="global"/>
+    <aura:attribute name="isSyncToBrightspot" type="boolean" default="false" access="global"/>
+    <aura:attribute name="isLastSyncWithBS" type="boolean" default="false" access="global"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.onInit}"/>
+    
+    <!--aura:if isTrue="{!v.isMember}"-->
+        <div class="slds-m-around--x-large right-align">
+            <lightning:button label="Create New" aura:id="createNew" onclick="{!c.openModal}" />
+        </div>
+        <!--aura:set attribute="else">
+            <p> </p>
+        </aura:set>
+    </aura:if-->
+    
+    <aura:if isTrue="{!v.isOpen}">
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-modal_medium slds-fade-in-open">
+            <div class="slds-modal__container"> 
+                <div class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" 
+                            title="Close" onclick="{!c.closeModal}">
+                        <lightning:icon iconName="utility:close" size="medium" variant="bare"/>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="header43" class="slds-text-heading--medium">Create New Trade Contact List</h2>
+                </div>
+                
+                <div class="slds-modal__content slds-p-around--medium">                   
+                    <lightning:recordEditForm
+                                              onsubmit="{!c.handleSubmit}"
+                                              onsuccess="{!c.handleSuccess}"
+                                              objectApiName="Campaign"
+                                              aura:id="CreateTCL"
+                                              recordTypeId="{!$Label.c.TCLRecordType}" 
+                                              density="comfy">
+                        
+                        <!-- the messages component is for error messages -->
+                        <lightning:messages aura:id="Messages"/>
+                        <div class="slds-form slds-form_compound">
+                            <!--form class="slds-form-element slds-form-stacked" style="margin:10px"-->
+                            <lightning:card>
+                                <aura:set attribute = "title">
+                                    
+                                    CAMPAIGN INFO
+                                    <aura:if isTrue="{!v.error}">
+                                        <p class="slds-align_absolute-center requiredText">Required Fields Missing : &nbsp;<ui:outputText value="{!v.errMessage}"/></p>
+                                        <aura:set attribute="else">
+                                            <p> </p>
+                                        </aura:set>
+                                    </aura:if>
+                                </aura:set>
+                                <lightning:layout>
+                                    <lightning:layoutitem size="6" padding="around-small">                                 
+                                        <lightning:inputField fieldName="Name" aura:id="requiredField" />                                       
+                                        <lightning:inputField fieldName="Type__c" />                                               
+                                        <lightning:inputField fieldName="StartDate" />
+                                        <lightning:inputField fieldName="EndDate" />
+                                        <lightning:inputField fieldName="Status" />                                           
+                                        <!--aura:if isTrue="{!v.isSyncToBrightspot}"-->
+                                            <lightning:inputField fieldName="Sync_To_BrightSpot__c" aura:id="syncToBrightspt" onchange="{!c.showLastSync}"/>
+                                            <!--aura:set attribute="else">
+                                                <p> </p>
+                                            </aura:set>
+                                        </aura:if-->
+                                        <lightning:inputField fieldName="Auto_Approve__c" />
+                                        <lightning:inputField fieldName="Event_Lead__c" />
+                                        <lightning:inputField fieldName="PSM_Lead__c" />
+                                    </lightning:layoutitem>
+                                    <lightning:layoutitem size="6" padding="around-small">                                       
+                                        <lightning:inputField fieldName="Vertical__c" aura:id="requiredField" class="requiredClass" />
+                                        <lightning:inputField fieldName="Properties__c" aura:id="requiredField" class="requiredClass"/>
+                                        <lightning:inputField fieldName="Description" />
+                                        <lightning:inputField fieldName="Will_Client_Hosts_need_to_be_associated__c" aura:id="requiredField" class="requiredClass"/>
+                                        <aura:if isTrue="{!v.isLastSyncWithBS}">
+                                            <lightning:inputField fieldName="Last_Sync_With_BS__c" disabled="true"/>
+                                            <aura:set attribute="else">
+                                                <p> </p>
+                                            </aura:set>
+                                        </aura:if>
+                                    </lightning:layoutitem>
+                                </lightning:layout>
+                                <aura:set attribute="footer">
+                                    <lightning:button variant="brand" label="Save" type="submit"/>
+                                    <lightning:button class="slds-button slds-button_neutral" label="Cancel" onclick="{!c.closeModal}"/>
+                                </aura:set>
+                            </lightning:card>
+                            
+                            <!--/form-->
+                        </div>
+                    </lightning:recordEditForm>
+                </div>                                           
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    
+</aura:component>
+
+
+***************************************************************************************************************************************************************************************
+CLIENT SIDE CONTROLLER:			TCL_CREATEController.js
+***************************************************************************************************************************************************************************************
+
+({
+    onInit : function(component, event, helper) {
+        // Commented by Shweta Meshram for story #170078430 to remove rendering condn for 'Create New' button and 'Sync_To_BrightSpot ' field on Create New, Detail, Edit, Clone. 
+        /*helper.callServer(component,"c.checkUserGroup",function(response){
+            if(response){
+                if(response.includes('Skuid Access - Trade Contact List') )                
+                    component.set("v.isMember",true);
+                if(response.includes('Skuid Access - Modify All TCL'))                
+                    component.set("v.isSyncToBrightspot",true);
+            }
+        }); */
+    },
+    
+    openModal: function(component, event, helper) {
+        component.set("v.isOpen", true);		                   
+    },
+    
+    closeModal: function(component, event, helper) {
+        component.set("v.isOpen", false);
+    },
+    
+    showLastSync : function(component, event, helper) {
+        var syncToBrightspt = component.find('syncToBrightspt').get("v.value");
+        console.log(syncToBrightspt);
+        if(syncToBrightspt)
+            component.set("v.isLastSyncWithBS", true);
+        else
+            component.set("v.isLastSyncWithBS", false);
+    },
+    
+    handleSubmit: function(component, event, helper) {        
+        event.preventDefault();
+        var emptyFields = '';
+        
+        var fields = event.getParam('fields');
+        console.log('fields  '+fields);
+        var valid = true;
+        var error = false;
+        var reqFieldList = component.find('requiredField');
+        if(reqFieldList != null  && reqFieldList != undefined){
+            reqFieldList.forEach(function(field){
+                if(field.get("v.value") === null || field.get("v.value") === undefined || field.get("v.value") === ''){
+                    //var fieldreq = component.find('requiredField');
+                    console.log(field.get("v.fieldName"));
+                    emptyFields = emptyFields + field.get("v.fieldName") + ' ';                                         
+                    $A.util.addClass(field,'slds-has-error');
+                    //field.setErrors('v.errors',[{message : "Complete this field."}]);
+                    component.set('v.error',true);
+                    valid = false;
+                    error = true;
+                }
+            });
+            if(emptyFields!=null && emptyFields!='' && emptyFields.length > 0){
+            helper.callServer(component,"c.getFieldLabel",function(response){
+                console.log(' not inside empty fields '+response);
+                if(response){
+                    console.log('empty fields '+response);
+                    component.set('v.errMessage',response.toString());
+                }
+            },
+            {
+                'objName' : 'Campaign',
+                'emptyFields' : emptyFields
+            });
+            }
+        }
+        if(valid){
+            console.log('handleSubmit'+component.find("CreateTCL"));
+            component.find("CreateTCL").submit(fields);
+        }         
+    },
+    
+    handleSuccess: function(component, event,helper) {
+        var SavedRecord =event.getParams().response;
+        console.log('SavedRecord.id '+SavedRecord.id);
+        if(SavedRecord !== null || SavedRecord.Id !== null){
+            console.log('nav');
+            /*var urlEvent = $A.get("e.force:navigateToURL");
+            urlEvent.setParams({
+                "url": "/lightning/r/Campaign/"+SavedRecord.id+"/view"                  
+            });
+            urlEvent.fire(); */
+            var navEvt = $A.get("e.force:navigateToSObject");           
+            navEvt.setParams({
+                "recordId": SavedRecord.id,
+                "slideDevName": "detail"
+            });
+            navEvt.fire();
+        } 
+    },
+    
+    
+    
+})
+
+
+***************************************************************************************************************************************************************************************
+CSS
+***************************************************************************************************************************************************************************************
+.THIS .slds-modal__container{
+    /*width: 120vw;
+    height: 100vh;*/
+    max-width: 70rem !important;
+    width:70% !important;
+}
+.THIS .slds-modal__header{
+    background-color: rgba(79, 76, 133, 1);;
+    font-weight: bold;
+    color: white;
+}
+
+.THIS .slds-modal__container{
+    width: 600%;
+    max-width: max-content;
+}
+
+.THIS .right-align{
+    padding-left: 1050px;
+}
+
+
+.THIS .slds-align_absolute-center{
+
+    
+    font-size: medium;
+}
+
+
+.THIS .requiredClass::before{
+    color: #e32;
+    content: '*';
+    margin: 0 0.125rem 0 0.125rem;
+    float: left;
+    
+}
+
+.THIS .requiredClass .slds-form-element .slds-dropdown-trigger{
+	display : inherit;
+}
+.THIS .requiredText{
+    
+}
+
+***************************************************************************************************************************************************************************************
+***************************************************************************************************************************************************************************************
+******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
+
+TCL_Contact_List_Memebers
+
+
+CONTROLLER:			TCL_Contact_ctrl
+COMPONENT:			TCL_Contact_List_Memebers.cmp
+JS CONTROLLER:		TCL_Contact_List_MemebersController.js
+HELPER:				TCL_Contact_List_MemebersHelper.js
+STYLE:				TCL_Contact_List_Memebers.css
+
+
+***************************************************************************************************************************************************************************************
+CONTROLLER:			TCL_Contact_ctrl
+***************************************************************************************************************************************************************************************
+
+/* Test class -TestTradeContactList*/
+public class TCL_Contact_ctrl {
+    
+    
+    @AuraEnabled
+    public static Campaign getCampaignDetails(String CampaignId){
+        System.debug('Hi'+CampaignId);
+        return [Select Id, Name, Will_Client_Hosts_need_to_be_associated__c from Campaign where id=:CampaignId];
+    }
+    
+    @AuraEnabled
+    public static ContactPagerWrapper getContactsCtrl(String recordType,Integer rowsToLoadCtrl ,Map<String, Object> params){
+        
+        List<Contact> contList = new List<Contact>();
+        List<contactWrapperClass> contWrapperList = new List<contactWrapperClass>();
+        ContactPagerWrapper obj =  new ContactPagerWrapper();       
+        obj.totalNumberOfRows = [SELECT count() FROM contact where recordtype.name = : recordType];
+        
+        String queryString = 'Select Id,Name,Account.Name,Contact_Level__c,Email,RecordType.Name,MailingCity,MailingState  from Contact where recordtype.name = : recordType ';
+        String filterCondition = '';
+        String filterContacts = '';
+        String orderByCaluse = ' LIMIT :rowsToLoadCtrl';
+        /*for(String key : params.keySet()){
+String val = (String)params.get(key);
+if(val!=null && val!='')
+filterCondition = filterCondition + ' and '+key+'=:val';
+}*/
+        if(params.get('isActive')!=null && params.get('isActive')!=''){
+            boolean isActive = (boolean)params.get('isActive');
+            system.debug('isActive'+isActive);
+            filterCondition = filterCondition +' and Marked_for_Deletion__c ='+isActive;
+        }
+        
+        if(params.get('tiers')!=null && params.get('tiers')!=''){
+            String  tier = (String)params.get('tiers');
+            system.debug('tier  '+tier);
+            List<String> tierList = new List<String>();
+            String tierStr ='';
+            tier = tier.substringBetween('[',']');           
+            for(Integer i=0;i < tier.length();i++)
+                tierStr = tier.replace('"', '');
+            
+            tierList = tierStr.split(',');
+            system.debug('tier '+tierList);
+            filterCondition = filterCondition + ' and Contact_Level__c in :tierList';
+            system.debug('filterCondition '+filterCondition);
+        }
+        if( params.get('accntName')!=null && params.get('accntName')!=''){
+            String accName = (String)params.get('accntName');
+            system.debug('accName'+accName);
+            filterCondition = filterCondition + ' and Account.Name like \'%'+accName+'%\'';
+        }
+        if( params.get('city')!=null && params.get('city')!=''){
+            String city = (String)params.get('city');
+            filterCondition = filterCondition +' and MailingCity like\'%'+city+'%\'';
+        }
+        if( params.get('state')!=null && params.get('state')!=''){
+            String state = (String)params.get('state');
+            filterCondition = filterCondition + ' and MailingState like\'%'+state+'%\'';
+        }
+        
+        if(params.get('searchContact')!=null && params.get('searchContact')!=''){
+            String searchStr = (String)params.get('searchContact');
+            filterCondition = filterCondition + ' and Name like\'%'+searchStr+'%\'';                       
+        }
+        if(params.get('searchContact')!=null && params.get('searchContact')!=''){
+            String searchStr = (String)params.get('searchContact');
+            if(searchStr.length() > 2){
+                String searchStr1 = '*'+searchStr+'*';
+                String searchQuery = 'FIND \''+ searchStr1 + '\' IN Name FIELDS RETURNING  Contact (Id,Name,Account.Name,Contact_Level__c,Email,RecordType.Name,MailingCity,MailingState WHERE RecordType.Name =:recordType  LIMIT :rowsToLoadCtrl)';
+                List<List<sObject>> searchList = search.query(searchQuery);
+                system.debug(searchList);
+                contList  = ((List<contact>)searchList[0]);
+                system.debug(contList);
+            }
+        }
+        else{
+            queryString = queryString + filterCondition +orderByCaluse;
+            System.debug('queryString '+queryString);
+            try{
+                contList = Database.query(queryString);
+            }
+            catch(Exception e){
+                system.debug('Error '+e.getMessage());
+            }     
+        }        
+        for(Contact cont : contList)
+            contWrapperList.add(new contactWrapperClass(cont));
+        
+        obj.contacts = contWrapperList;
+        system.debug('obj.contacts '+obj.contacts);
+        return obj;
+    }
+    
+    public class ContactPagerWrapper {
+        @AuraEnabled public Integer totalNumberOfRows {get;set;}
+        @AuraEnabled public List<contactWrapperClass> contacts {get;set;}
+    }
+    
+    public class contactWrapperClass{
+        @AuraEnabled public String name;
+        @AuraEnabled public String accName;
+        @AuraEnabled public String tierLevel;
+        @AuraEnabled public String email;
+        @AuraEnabled public String recTypeName;
+        @AuraEnabled public String contId;
+        @AuraEnabled public String mailingCity;
+        @AuraEnabled public String mailingState;
+        
+        public contactWrapperClass(Contact cont){
+            this.contId = cont.Id;
+            this.name = cont.Name;
+            this.accName = cont.Account.Name;
+            this.tierLevel = cont.Contact_Level__c;
+            this.email = cont.Email;
+            this.recTypeName = cont.RecordType.Name;
+            this.mailingCity = cont.MailingCity;
+            this.mailingState = cont.MailingState;
+        } 
+    }
+    
+    @AuraEnabled
+    public static String addNewCampMembers (Id CampaignId,List<Id> contIdList,Map<String, Object> params){
+        System.debug(' addNewCampMembers ' + params);
+        String message;
+        
+        List<CampaignMember> campMemberList = new List<CampaignMember>(); 
+        for(Id contId : contIdList){
+            CampaignMember cm = new CampaignMember();
+            cm.CampaignId = CampaignId;
+            cm.ContactId = contId;
+            cm.Rank__c = (String)params.get('Rank');
+            cm.Response__c = (String)params.get('Response');
+            cm.Invited__c = (boolean)params.get('Invited');
+            cm.Attended__c = (boolean)params.get('Attended');
+            cm.Cancelled__c = (boolean)params.get('Cancelled');
+            cm.No_Show__c = (boolean)params.get('No Show');
+            cm.Walk_In__c = (boolean)params.get('Walk In');
+            cm.Attendee_Group__c = (String)params.get('Attendee Group');
+            cm.Invited_By_Agency__c = (String)params.get('Invited By Agency');
+            cm.Attendee_Sub_Group__c = (String)params.get('Attendee Sub Group');
+            campMemberList.add(cm);
+        }
+        Database.SaveResult[] srList = Database.insert(campMemberList,false);
+        
+        for (Database.SaveResult sr : srList) {            
+            if (!sr.isSuccess()) {               
+                for(Database.Error err : sr.getErrors()) {
+                    System.debug('The following error has occurred.');                   
+                    System.debug(err.getStatusCode() + ': ' + err.getMessage());
+                    message = ''+err.getStatusCode() + ': ' + err.getMessage();
+                    System.debug('Fields that affected this error: ' + err.getFields());
+                }
+            }
+            else if(sr.isSuccess()){
+                system.debug('successfully added records  '+sr.getId());
+                message = 'Successfully Added';
+            }        
+        }       
+        return message;
+    }
+    
+    /* Code newly Added as a part of Client Host Enhancement Ticket No: #169192296 On 20/11/2019 by Joel Dcruz ******/
+    @AuraEnabled
+    public static String addSelectedMembers(Id CampaignId,List<Id> contIdList,Map<String, Object> params, Id clientHostId ){
+        System.debug(contIdList + ' clientHostId ' + clientHostId );
+        String  message;
+        Set<Id> ContactIds = new Set<Id>(contIdList); 
+        Set<Id> newCampMembers = new Set<Id>();
+        Set<Id> campMemIds = new Set<Id>();
+        Map<Id, Id> conToCMmap = new Map<Id,Id>();
+        Map<Id, User> userNameMap = new Map<Id,User>([Select id, Name from User where Id =: clientHostId]);
+        Map<Id, String> campMemNameMap = new Map<Id,String>();
+        Map<Id, List<Client_Host__c>> ExistingCMHostMap = new Map<Id,List<Client_Host__c>>();
+        Map<Id, Contact> contactIdName = new Map<Id,Contact>([Select id, Name from Contact where Id IN: contIdList ]); 
+        
+        
+        List<CampaignMember> selectedCMS = new List<CampaignMember>([Select id,Name,ContactId from CampaignMember where 
+                                                                     CampaignId =:CampaignId AND ContactId=:contIdList]);
+        System.debug('Campaign Members : ' + selectedCMS);	
+        
+        if(selectedCMS.size() > 0){
+            for(CampaignMember cm : selectedCMS){
+                campMemIds.add(cm.id);
+                if(! campMemNameMap.containsKey(cm.Id)){
+                    campMemNameMap.put(cm.Id, cm.name);
+                }
+            }
+        }
+        
+        System.debug('campMemNameMap ' + campMemNameMap);
+        
+        for(CampaignMember tempCM : selectedCMS){
+            if(! conToCMmap.containsKey(tempCM.ContactId)){
+                conToCMmap.put(tempCM.ContactId,tempCM.Id);
+            }
+        }
+        System.debug('Contact To CM Map : ' + conToCMmap);
+        
+        for(Id tempId : ContactIds){
+            if(! conToCMmap.keySet().contains(tempId)){
+                newCampMembers.add(tempId);
+            }
+        }
+        System.debug('new Contact To CM Map : ' + newCampMembers);
+        
+        List <Client_Host__c> chostList = new List <Client_Host__c>([ Select id, Name, CampaignMember_ID__c, User__c,uniqueCode__c,Campaign_Member_Name__c, User_Name__c 
+                                                                     from Client_Host__c where CampaignMember_ID__c =:campMemIds]);
+        System.debug('chost ' + chostList.size());
+        
+        integer counter=0;
+            for(Id cmId : campMemIds){
+                counter++;
+                if(! ExistingCMHostMap.containsKey(cmId)){
+                        ExistingCMHostMap.put(cmId, new List<Client_Host__c>());
+                    }
+                
+                for(Client_Host__c ch : chostList ){
+                    
+                    if( ExistingCMHostMap.containsKey(cmId) && cmId == ch.CampaignMember_ID__c) {
+                        ExistingCMHostMap.get(cmId).add(ch);
+                    } 
+                }
+            }
+    
+        System.debug(' CMwithHostMap ' + ExistingCMHostMap + ' Final counter '+counter);
+        System.debug(' CMwithHostMap ' + ExistingCMHostMap.keySet() + ' Values '+ ExistingCMHostMap.Values());
+        
+        List<CampaignMember> campMemberList = new List<CampaignMember>();
+        List<Client_Host__c> newCHostList = new List <Client_Host__c>();
+        Boolean moreThan = false;
+        
+        //Adding New CM and CH combination
+        if(newCampMembers.size() > 0){
+            for(Id contId : newCampMembers){
+                CampaignMember cm = new CampaignMember();
+                cm.CampaignId = CampaignId;
+                cm.ContactId = contId;
+                cm.Rank__c = (String)params.get('Rank');
+                cm.Response__c = (String)params.get('Response');
+                cm.Invited__c = (boolean)params.get('Invited');
+                cm.Attended__c = (boolean)params.get('Attended');
+                cm.Cancelled__c = (boolean)params.get('Cancelled');
+                cm.No_Show__c = (boolean)params.get('No Show');
+                cm.Walk_In__c = (boolean)params.get('Walk In');
+                cm.Attendee_Group__c = (String)params.get('Attendee Group');
+                cm.Invited_By_Agency__c = (String)params.get('Invited By Agency');
+                cm.Attendee_Sub_Group__c = (String)params.get('Attendee Sub Group');
+                campMemberList.add(cm);
+            }
+        }
+        
+        if(campMemberList.size() > 0){ 
+            try{
+                System.debug('Inside Try ' + campMemberList.size());
+                insert campMemberList;
+                
+            }catch(Exception e){
+                system.debug('Exception ' + e.getMessage());
+            }
+            system.debug('after insert campMemberList ' + campMemberList );
+            
+            for(CampaignMember cm : campMemberList ){
+                //   System.debug('Ids of Newly created Cm ' + cm.id);
+                Client_Host__c ch = new Client_Host__c();
+                ch.User__c = clientHostId;
+                ch.CampaignMember_ID__c = cm.id;
+                ch.name = contactIdName.get(cm.ContactId).Name + '-' + userNameMap.get(clientHostId).name;
+                ch.User_Name__c=userNameMap.get(clientHostId).name;
+                ch.Campaign_Member_Name__c = contactIdName.get(cm.ContactId).Name;
+                newCHostList.add(ch);
+                // system.debug('successfully added records  '+ cm);
+                //   message = 'Successfully Added'; //Successfully added campaign member(s)
+            }
+        }
+        
+        if(campMemIds.size() > 0){
+            
+            for (Id existingCM : campMemIds){
+                String uniqueCode='';
+                uniqueCode = (String)existingCM + clientHostId;
+                system.debug(' uniqueCode created ' + uniqueCode);
+                
+                Set<String> CHUniqueNames = new Set<String>();
+                if( ExistingCMHostMap.containsKey(existingCM)){
+                    for(Client_Host__c ch : ExistingCMHostMap.get(existingCM)){
+                        System.debug(' ch ' + ch);
+                        CHUniqueNames.add(ch.uniqueCode__c);                
+                    }  
+                }
+                /*  if( ExistingCMHostMap.get(existingCM) != null ){
+for(Client_Host__c ch : ExistingCMHostMap.get(existingCM)){
+System.debug(' ch ' + ch);
+CHUniqueNames.add(ch.uniqueCode__c);                
+}   
+}else{
+Client_Host__c newCH = new Client_Host__c();
+newCH.CampaignMember_ID__c=existingCM;
+newCH.User__c=clientHostId;
+newCH.Name=campMemNameMap.get(existingCM) + '-' + userNameMap.get(clientHostId).Name;
+newCHostList.add(newCH);
+}*/				if(ExistingCMHostMap.containsKey(existingCM))
+                System.debug('ExistingCMHostMap.get(existingCM).size()   ' + ExistingCMHostMap.get(existingCM).size());
+                if(ExistingCMHostMap.get(existingCM).size() < 20 ){
+                    if(! CHUniqueNames.contains(uniqueCode)){
+                        Client_Host__c newCH = new Client_Host__c();
+                        newCH.CampaignMember_ID__c=existingCM;
+                        newCH.User__c=clientHostId;
+                        newCH.Name=campMemNameMap.get(existingCM) + '-' + userNameMap.get(clientHostId).Name;
+                        newCH.User_Name__c=userNameMap.get(clientHostId).Name;
+                        newCH.Campaign_Member_Name__c=campMemNameMap.get(existingCM);
+                        newCHostList.add(newCH);
+                        //   message = 'Successfully Added';
+                        System.debug(' Successfully uniqueCode ' + uniqueCode + ' name '+ newCH.Name);
+                    }else{
+                        //    message = 'Client Host Already Exists';
+                        System.debug(' Exists uniqueCode ' + uniqueCode);
+                        break;
+                    }
+                    
+                }else{
+                    moreThan = true;
+                }
+            }
+        }
+        try{
+            
+            if(newCHostList.size() > 0 ){
+                insert newCHostList;
+                message = 'Successfully Added';
+            }else{
+                message = 'Client Host Already Exists';
+            }
+            
+            if(newCHostList.size() < 1 && moreThan == true){
+                 message = 'Contains More than 20 Client Host';
+            }
+            
+            System.debug(' newCHostList ' + newCHostList.size());
+        }catch(Exception e){
+            system.debug(' ClientHost Insertion Error : ' + e.getStackTraceString());
+        }
+        ExistingCMHostMap.clear();
+        newCHostList.clear();
+        
+        return message;
+    }
+    /***** Enhancement # 169192296 Ends *****/
+    
+    
+    @AuraEnabled
+    public static String applyFilters(List<Contact> contList,Map<String, Object> params){
+        String queryString = '';
+        if(params.get('acctName')!=null || params.get('acctName')!='')
+            queryString = ' '+ params.get('acctName');
+        if(params.get('city')!=null){
+            if(queryString!='') queryString = ' and';
+            queryString = ' '+ params.get('city');
+        }        	return null;
+    }   
+}
+
+
+***************************************************************************************************************************************************************************************
+COMPONENT:			TCL_Contact_List_Memebers.cmp
+***************************************************************************************************************************************************************************************
+
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" 
+                controller="TCL_Contact_ctrl" extends="c:Base" access="global" >
+    <aura:attribute name="fieldMap" type="Map" />
+    <aura:attribute name="recordTypeName" type="String" />
+    <aura:attribute name="Contacts" type="Object"/>
+    <aura:attribute name="campaignObj" type="Object"  default="Campaign"/>
+    <aura:attribute name="SearchAccount" type="String" default=''/> 
+    <aura:attribute name="SearchCity" type="String" default=''/>
+    <aura:attribute name="SearchContact" type="String" default=''/>
+    <aura:attribute name="SearchState" type="String" default=''/>
+    <aura:attribute name="unfilteredContacts" type="Contact"/>
+    <aura:attribute name="recordId" type="String"/>
+    <aura:attribute name="columns" type="List"/> 
+    <aura:attribute name="CampMemMap" type="Map" default="{}" />
+    <aura:attribute name="selectedRowsData" type="Id" default="0"/>
+    <aura:attribute name="selectedRows" type="List"/> 
+    <aura:attribute name="showAddMember" type="boolean" default="true"/>
+    <aura:attribute name="totalNumberOfRows" type="integer" description="total records count store "/>
+    <aura:attribute name="initialRows" type="Integer" default="50"/>
+    <aura:attribute name="loadMoreStatus" type="String" default=""/>
+    <aura:attribute name="rowsToLoad" type="Integer" default="50"/>
+    <aura:attribute name="showDropDown" type="Boolean" access="PRIVATE" default="false"/>
+    <aura:attribute name="picklistoptions" type="List" access="public" default=""/>
+    <aura:attribute name="tierValue" type="List" default="[]"/>
+    <aura:attribute name="AllVal" type="List" default="[]"/>
+    <aura:attribute name="rowNumberOffset" type="Integer" default="0"/>
+    <aura:attribute name="massUpdate" type="Boolean" default="false"/>
+    <aura:attribute name="loggedInUser" type="Object" default="User__c"/>
+    
+    <!--Event-->
+    <aura:registerEvent name="closeModal" type="c:TCLCloseModal"/>
+    <aura:registerEvent name="loadMoreRecords" type="c:GenericListViewLoadMoreEvent"/>
+    <aura:registerEvent name="closeAddMembers" type="c:TCLCloseAddMemModal"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <br/>
+    <div class="slds-modal__CampaignMember">STATUS FOR CONTACTS</div>
+    <lightning:recordEditForm aura:id="recordView"
+                              onload="{!c.handleLoad}"
+                              onsubmit="{!c.handleSubmit}"
+                              onsuccess="{!c.handleSuccess}"
+                              objectApiName="CampaignMember"
+                              density="comfy">
+        
+        <div class="c-container">
+            <lightning:layout verticalAlign="end">
+                <lightning:layoutItem >                                
+                    <lightning:inputField fieldName="Rank__c" aura:id="rank"/>          
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Response__c" aura:id="response"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Invited__c" aura:id="invited"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Attended__c" aura:id="attended"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Cancelled__c" aura:id="cancelled"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="No_Show__c" aura:id="noShow"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Walk_In__c" aura:id="walkIn"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Attendee_Group__c" aura:id="attendeeGrp"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Invited_By_Agency__c" aura:id="invitedByAgency"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem >
+                    
+                    <lightning:inputField fieldName="Attendee_Sub_Group__c" aura:id="attendeeSubGrp"/>
+                    
+                </lightning:layoutItem>
+            </lightning:layout>
+        </div>
+    </lightning:recordEditForm>
+    <div style="margin-top: 2rem;font-size: 16pt;">
+        List Members
+    </div>
+    <div class="slds-clearfix">
+        <div class="slds-float_left input">          
+            <lightning:select aura:id="selectIsActive" name="selectIsActive" label="" onchange="{!c.applyFilter }">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </lightning:select>
+        </div>
+        <div class="slds-float_left input" style="padding-top: 20px;">          
+            <lightning:button label="All Tiers" title="Base action" onclick="{!c.toggleDropDown}" class="alltiersbtn"/>
+            <aura:if isTrue="{!v.showDropDown}">
+                <div onmouseleave="{!c.toggleDropDown}" class="slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open">
+                    <div id="dropdown" class="slds-dropdown slds-dropdown-triggerclick slds-is-open" aria-expanded="true" style="height: 12rem; width : 8rem; padding-left: 2px; padding-bottom: 2px;">
+                        <ul class="dropdown__list" role="menu" >                     
+                            <lightning:checkboxGroup  name="Checkbox Group"  label="" options="{!v.picklistoptions}"  value="{!v.tierValue}" onchange="{!c.applyMultiSelectFilter}" style="padding-bottom: 5px;"/>                           
+                        </ul>
+                    </div>
+                </div>
+            </aura:if>
+        </div>
+        <div class="slds-float_left input" >
+            <lightning:input name="searchBox" type ="search" value="{!v.SearchAccount}" placeholder="Search Account" onchange="{!c.applyFilter}"/>
+        </div>
+        <div class="slds-float_left input" >
+            <lightning:input name="searchBoxCity" type ="search" value="{!v.SearchCity}" placeholder="City" onchange="{!c.applyFilter}"/>
+        </div>
+        <div class="slds-float_left input" >
+            <lightning:input name="searchBoxState" type ="search" value="{!v.SearchState}" placeholder="State" onchange="{!c.applyFilter}"/>
+        </div>
+        <div class="slds-float_right ">
+            <lightning:input name="searchBoxContact" type ="search" value="{!v.SearchContact}" placeholder="Search Contacts" onchange="{!c.applyFilter}"/>
+        </div>
+    </div>
+    
+    <div class="slds-clearfix">
+        <div class="massAdd">
+            <lightning:button variant="neutral" label="Mass Add Campaign Member" title="Add Member" name="Add Member"  onclick="{!c.addMember}" disabled="{!v.showAddMember}"/>       
+        </div>
+    </div>
+    
+    <div>
+        <!-- New Modal Popup for Mass update of Client Host -->
+        <aura:if isTrue="{!v.massUpdate}">
+            <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-modal_large slds-fade-in-open">
+                <div class="slds-modal__container"> 
+                    <div class="slds-modal__header">
+                        <!--button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="{!c.closeModal}">
+                            <lightning:icon iconName="utility:close" size="medium" variant="bare"/>
+                            <span class="slds-assistive-text">Close</span>
+                        </button-->
+                        <h2 id="header43" class="slds-text-heading--medium">Add Client Host</h2>
+                    </div>
+                    <div class="slds-modal__content slds-p-around--medium">
+                        <lightning:recordEditForm   aura:id="clientHost"  onload="{!c.Load}"
+                                                  onsubmit="{!c.saveModal}"
+                                                  onsuccess="{!c.Success}"
+                                                  objectApiName="Client_Host__c">
+                            <div><h2> Select Client Host</h2></div> <br/>
+                            <lightning:inputField fieldName="User__c" label="Select Client Host" aura:id="chuser" 
+                                                  value="{! v.loggedInUser}" required="true" onchange="{!c.getUser}" />
+                            
+                            
+                            <lightning:button variant="neutral" type="submit" label="Save" />
+                            <lightning:button variant="neutral" label="Cancel" title="Cancel" name="Cancel" onclick="{!c.closeModal}"/> 
+                        </lightning:recordEditForm>  
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+        
+    </div>
+    
+    <div style="height: 300px margin-top: 10px;">
+        <lightning:datatable
+                             keyField="Id" 
+                             data="{!v.Contacts}" 
+                             columns="{!v.columns }" 
+                             selectedRows = "{!v.selectedRows}" 
+                             onrowselection="{!c.updateSelectedRow}"     
+                             hideCheckboxColumn="false"
+                             rowNumberOffset="{! v.rowNumberOffset }" />
+    </div>
+    
+    <lightning:input type="number" label="Load Rows" name="inputRowsToLoad" value="{!v.rowsToLoad }"/>       
+    <div class="loadMore" style="text-align: center; font-size: smaller;">
+        <a onclick="{!c.loadMore}">Load More</a>
+    </div>
+    {!v.loadMoreStatus }
+    
+</aura:component>
+
+
+***************************************************************************************************************************************************************************************
+JS CONTROLLER:		TCL_Contact_List_MemebersController.js
+***************************************************************************************************************************************************************************************
+
+({
+    
+    doInit : function(component, event, helper) {
+        var opts = [];
+        opts.push({ label : 'All', value : 'All'});
+        opts.push({ label : 'Tier 1', value : 'Tier 1'});
+        opts.push({ label : 'Tier 2', value : 'Tier 2'});
+        opts.push({ label : 'Tier 3', value : 'Tier 3'});
+        
+        component.set('v.picklistoptions',opts);
+        component.set('v.fieldMap',new Map());
+        component.set('v.columns', [
+            {label: 'Name', fieldName: 'linkName', type: 'url', 
+             typeAttributes: {label: { fieldName: 'name' }, target: '_blank',tooltip:' '}},
+            {label: 'ACCOUNT NAME', fieldName: 'accName', type: 'text'},
+            {label: 'TIER', fieldName: 'tierLevel', type: 'text'},
+            {label: 'CITY', fieldName: 'mailingCity', type: 'text'},
+            {label: 'STATE', fieldName: 'mailingState', type: 'text'},
+            {label: 'EMAIL', fieldName: 'email', type: 'email'},
+            {label: 'RECORDTYPE NAME', fieldName: 'recTypeName', type: 'text'}       
+        ]);
+        helper.getContacts(component,event,component.get('v.initialRows'),helper);
+        helper.callServer(component,"c.getCampaignDetails",function(response) {  
+            if(response){
+                console.log('response '+response);
+                component.set('v.campaignObj',response);
+            }
+        },{
+            'CampaignId' : component.get('v.recordId')
+        });
+        var userId = $A.get("$SObjectType.CurrentUser.Id");
+        component.set('v.loggedInUser', userId);
+    },  
+    
+    Load : function(component, event, helper) {
+        // alert('on load')
+        var userId = $A.get("$SObjectType.CurrentUser.Id");
+        component.set('v.loggedInUser', userId);
+        console.log('testing client host');
+    },
+    
+    success : function(component, event, helper) {
+        console.log('testing client host');
+    },
+    
+    
+    loadMore: function(component, event, helper) {
+        
+        var rowsToLoad = component.get('v.rowsToLoad');
+        if((rowsToLoad % 1)==0)
+        {	
+            var rowsToLoad =  rowsToLoad.toString();
+            if (rowsToLoad.includes('-')) {  		
+                var toastEvent = $A.get("e.force:showToast");
+                toastEvent.setParams({
+                    "title": "Error!",
+                    "type": "error",
+                    "message": "Please enter a non negative value."
+                });
+                toastEvent.fire();
+            }
+            else
+            {
+                component.set("v.isLoading", true);
+                component.set('v.loadMoreStatus', 'Loading');
+                
+                if (component.get('v.Contacts').length >= component.get('v.totalNumberOfRows')) {
+                    component.set('v.loadMoreStatus', 'No more data to load');
+                } else {
+                    console.log('len '+component.get('v.Contacts').length);
+                    rowsToLoad = parseInt(component.get('v.Contacts').length) + parseInt(rowsToLoad);
+                    console.log('rowsToLoad  ',rowsToLoad);
+                    helper.getContacts(component, event, rowsToLoad,helper);
+                    component.set('v.loadMoreStatus', '');
+                }
+                component.set("v.isLoading", false);
+            }
+        } 		               
+    },
+    
+    updateSelectedRow :  function(component, event, helper) {
+        var selectedRows = event.getParam('selectedRows');
+        console.log('selectedRows  '+selectedRows);
+        var obj =[]; 
+        for (var i = 0; i < selectedRows.length; i++){
+            obj.push(selectedRows[i].contId);           
+        }
+        console.log('obje  '+obj);
+        component.set('v.selectedRowsData',obj);   
+        if(obj.length>0){
+            component.set('v.showAddMember',false);               
+        } else if(obj.length<=0)
+            component.set('v.showAddMember',true); 
+        
+    },
+    
+    addMember : function(component, event, helper) {
+        var isClientH = component.get('v.campaignObj.Will_Client_Hosts_need_to_be_associated__c');
+        if(isClientH == 'Yes'){
+            component.set('v.massUpdate', true);
+        }else{
+            helper.addCampaignMembers(component, event, helper);
+        }
+    },
+    
+    saveModal : function(component, event, helper) {
+        event.preventDefault();
+        var fields = event.getParam('fields');
+        helper.addMember(component, event, helper);
+    },
+    
+    getUser : function(component, event, helper){
+        var user = event.getSource().get("v.value")
+        console.log('user....'+user);
+    },
+    
+    applyFilter : function(component, event, helper) {
+        console.log('inside applyfilter');
+        var rowsToLoad = component.get("v.rowsToLoad");
+        helper.getContacts(component, event, rowsToLoad,helper);                   
+        
+    },
+    
+    applyMultiSelectFilter : function(component, event, helper) {
+        console.log('inside applyMultiSelectFilter');
+        var arr = [];
+        arr.push('Tier 1');
+        arr.push('Tier 2');
+        arr.push('Tier 3');
+        var valSelected = component.get("v.tierValue");
+        if(valSelected.includes('All')){
+            component.set('v.AllVal',arr);
+        }
+        var rowsToLoad = component.get("v.rowsToLoad");
+        helper.getContacts(component, event, rowsToLoad,helper);                   
+        
+    },
+    toggleDropDown : function(component, event, helper) {
+        var val = component.get("v.showDropDown");
+        if(val == true){
+            component.set("v.showDropDown",false);
+        }
+        else{
+            component.set("v.showDropDown",true);
+        }
+    },
+    
+    closeModal : function(component, event, helper) {
+        component.set('v.massUpdate',false);
+    },  
+    
+})
+
+
+***************************************************************************************************************************************************************************************
+HELPER:				TCL_Contact_List_MemebersHelper.js
+***************************************************************************************************************************************************************************************
+
+({
+    getContacts :function(component,event,rowsToLoad,helper) {
+        var recType = component.get('v.recordTypeName');       
+        console.log('recordTypeName in helper  '+recType);
+        var fieldMap = component.get('v.fieldMap');
+        var markedForDel=false;
+        if(component.find('selectIsActive').get('v.value')=='Active')
+            markedForDel = false;
+        if(component.find('selectIsActive').get('v.value')=='Inactive')
+            markedForDel = true;
+        
+        var selected = component.get("v.tierValue");
+        var options = component.get("v.picklistoptions");
+        console.log('selected '+selected);  
+        for(var i=0;i<options.length;i++){
+            if(selected.includes(options[i].label)){
+                if(selected.includes('All')){
+                    var allSelected = component.get("v.AllVal");
+                    fieldMap['tiers'] = JSON.stringify(allSelected);
+                } else{		  
+                    console.log('selected '+selected);
+                    fieldMap['tiers'] = JSON.stringify(selected);          
+                }
+            }
+        }
+        
+        fieldMap['isActive'] = markedForDel;
+        fieldMap['accntName'] = component.get('v.SearchAccount');
+        fieldMap['city'] = component.get('v.SearchCity');
+        fieldMap['state'] = component.get('v.SearchState');
+        fieldMap['searchContact'] = component.get('v.SearchContact');
+        
+        console.log('filters  '+JSON.stringify(fieldMap));
+        
+        helper.callServer(component,"c.getContactsCtrl",function(response) {  
+            if(response){
+                console.log('In res helper');
+                console.log('getContacts response     '+JSON.stringify(response));
+                
+                var records =response.contacts;
+                records.forEach(function(record){
+                    if(record.contId!=null && record.contId!=undefined)
+    	                record.linkName = '/'+record.contId;
+                });
+                component.set("v.Contacts", records);
+                component.set("v.totalNumberOfRows", response.totalNumberOfRows);
+            } else{
+                console.log('Error in fetching contacts');
+            }
+        },{
+            
+            "recordType" : component.get('v.recordTypeName'),
+            "rowsToLoadCtrl" : rowsToLoad,
+            "params": fieldMap            
+        });
+    },
+    
+    addCampaignMembers :function(component,event,helper) { 
+        var selectedRowData = component.get('v.selectedRowsData');
+        var CampMemMap = component.get("v.CampMemMap");
+        
+        CampMemMap["Rank"]= component.find('rank').get('v.value');
+        CampMemMap["Response"]= component.find('response').get('v.value');
+        CampMemMap["Invited"]= component.find('invited').get('v.value');
+        CampMemMap["Attended"]= component.find('attended').get('v.value');
+        CampMemMap["Cancelled"]= component.find('cancelled').get('v.value');
+        CampMemMap["No Show"]= component.find('noShow').get('v.value');
+        CampMemMap["Walk In"]= component.find('walkIn').get('v.value');
+        CampMemMap["Attendee Group"]= component.find('attendeeGrp').get('v.value');
+        CampMemMap["Invited By Agency"]= component.find('invitedByAgency').get('v.value');
+        CampMemMap["Attendee Sub Group"]= component.find('attendeeSubGrp').get('v.value');
+        
+        helper.callServer(component,"c.addNewCampMembers",function(response) {  
+            if( response ){
+                console.log('response '+response);
+                var setEvent = $A.get("e.c:TCLCloseAddMemModal");
+                var msg = response;
+                setEvent.setParams({"action": 'camMemSuccess'+msg});              
+                setEvent.fire();
+            }
+        },{
+            'CampaignId' : component.get('v.recordId'),
+            'contIdList' : selectedRowData,
+            'params' : CampMemMap
+        });
+        
+    },
+    
+    addMember :function(component,event,helper) {
+       // alert('Adding Member');
+        var selectedRowData = component.get('v.selectedRowsData');
+        console.log('selectedRowData  '+selectedRowData);
+        var fields = event.getParam('fields');
+        var clientHostId = fields.User__c;
+        console.log(' testing  saveModal Helper '+ fields.User__c);
+        
+        var CampMemMap = component.get("v.CampMemMap");
+        CampMemMap["Rank"]= component.find('rank').get('v.value');
+        CampMemMap["Response"]= component.find('response').get('v.value');
+        CampMemMap["Invited"]= component.find('invited').get('v.value');
+        CampMemMap["Attended"]= component.find('attended').get('v.value');
+        CampMemMap["Cancelled"]= component.find('cancelled').get('v.value');
+        CampMemMap["No Show"]= component.find('noShow').get('v.value');
+        CampMemMap["Walk In"]= component.find('walkIn').get('v.value');
+        CampMemMap["Attendee Group"]= component.find('attendeeGrp').get('v.value');
+        CampMemMap["Invited By Agency"]= component.find('invitedByAgency').get('v.value');
+        CampMemMap["Attendee Sub Group"]= component.find('attendeeSubGrp').get('v.value');
+        
+        helper.callServer(component,"c.addSelectedMembers",function(response) {  
+            if( response ){
+                console.log('response '+response);
+                component.set('v.massUpdate', false);
+                var setEvent = $A.get("e.c:TCLCloseAddMemModal");
+                var msg = response;
+                setEvent.setParams({"action": 'camMemSuccess'+msg});              
+                setEvent.fire();
+            }
+        },{
+            'CampaignId' : component.get('v.recordId'),
+            'contIdList' : selectedRowData,
+            'params' : CampMemMap,
+            'clientHostId' : clientHostId
+            
+        });               
+    }
+})
+
+
+***************************************************************************************************************************************************************************************
+STYLE:				TCL_Contact_List_Memebers.css
+***************************************************************************************************************************************************************************************
+
+.THIS {
+}
+
+.THIS .slds-modal__CampaignMember{
+    background-color: rgb(221, 219, 218);
+    font-weight: bold;
+    color: white;
+}
+.THIS .input {
+  height: 20px;
+  min-width : 100px;
+  max-width : 180px;
+  flex: 0 0 200px;
+  margin-left: 10px;
+  margin-top: 2px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.THIS .massAdd {
+  position: relative;
+  margin-left: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  
+}
+.THIS .alltiersbtn{
+    width:100%;
+}
+
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+
+TradeContactList_DetailPage
+
+CONTROLLER:			TCL_Contact_ctrl
+COMPONENT:			TradeContactList_DetailPage.cmp
+JS CONTROLLER:		TradeContactList_DetailPageController.js
+
+
+
+***************************************************************************************************************************************************************************************
+CONTROLLER:			TCL_Contact_ctrl
+***************************************************************************************************************************************************************************************
+
+***************************************************************************************************************************************************************************************
+***************************************************************************************************************************************************************************************
+COMPONENT:			TradeContactList_DetailPage.cmp
+***************************************************************************************************************************************************************************************
+<aura:component implements="force:appHostable,force:hasSObjectName,force:lightningQuickActionWithoutHeader,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,lightning:hasPageReference,lightning:actionOverride"
+                access="global" extends="c:Base" controller="TCL_Create_ctrl">
+    <aura:attribute name="isSyncToBrightspot" type="boolean" default="true" access="global"/>
+    <aura:attribute name="isLastSyncWithBS" type="boolean" default="false" access="global"/>
+    <aura:attribute name="permission" type="Object" access="global"/>
+    <aura:attribute name="recordId" type="String" access="global"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.onInit}"/>
+    
+    <lightning:recordViewForm recordId="{!v.recordId}" objectApiName="Campaign" density="compact">       
+        <lightning:layout>
+            <lightning:layoutitem size="6" padding="around-small">
+                
+                <lightning:outputField fieldName="Name"/>
+                <lightning:outputField fieldName="Type__c" />                                               
+                <lightning:outputField fieldName="StartDate" />
+                <lightning:outputField fieldName="EndDate" />
+                <lightning:outputField fieldName="Status" />                                           
+                <!--aura:if isTrue="{!v.permission != null}">
+                    <aura:if isTrue="{!v.permission.modifyAllAccess}"-->                        
+                        <lightning:outputField fieldName="Sync_To_BrightSpot__c" aura:id="syncToBrightspt" />
+                    <!--/aura:if>
+                </aura:if-->
+                <lightning:outputField fieldName="Auto_Approve__c" />
+            </lightning:layoutitem>
+            <lightning:layoutitem size="6" padding="around-small">
+                <lightning:outputField fieldName="Vertical__c" aura:id="vertical" />
+                <lightning:outputField fieldName="Properties__c" aura:id="properties"/>
+                <lightning:outputField fieldName="Event_Lead__c" />
+                <lightning:outputField fieldName="PSM_Lead__c" />
+                <lightning:outputField fieldName="Description" />
+                <aura:if isTrue="{!v.isLastSyncWithBS}">
+                    <lightning:outputField fieldName="Last_Sync_With_BS__c" />
+                    <aura:set attribute="else">
+                        <p> </p>
+                    </aura:set>
+                </aura:if>
+                <lightning:outputField fieldName="Will_Client_Hosts_need_to_be_associated__c"/>
+            </lightning:layoutitem>
+        </lightning:layout>
+    </lightning:recordViewForm>    
+</aura:component>
+
+
+
+***************************************************************************************************************************************************************************************
+JS CONTROLLER:		TradeContactList_DetailPageController.js
+*****************************************************************************************************************************************************************************************
+
+({
+    onInit : function(component, event, helper) {
+        
+        helper.callServer(component,"c.checkPermissions",function(response){
+            if(response){              
+                component.set("v.permission",response);
+            } else{
+                console.log('Error'+response);
+            }
+        },{
+            campaignId : component.get("v.recordId")
+        });
+        console.log('inside');
+        
+        helper.callServer(component,"c.issyncToBrightspt",function(response){
+            if(response === true){              
+                component.set("v.isLastSyncWithBS", true);
+            } else{
+                component.set("v.isLastSyncWithBS", false);
+            }
+        },{
+            campaignId : component.get("v.recordId")
+        });
+        
+    },
+    
+})
+
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+
+Trade_Contact_List_Clone
+
+APEX CONTROLLER:	TCL_Create_ctrl
+COMPONENT:			Trade_Contact_List_Clone.cmp
+JS CONTROLLER:		Trade_Contact_List_CloneController.js
+STYLE:				Trade_Contact_List_Clone.css
+
+***************************************************************************************************************************************************************************************
+APEX CONTROLLER:	TCL_Create_ctrl
+***************************************************************************************************************************************************************************************
+
+/* Test class -TestTradeContactList*/
+public class TCL_Create_ctrl {
+    
+    @AuraEnabled
+    public static Campaign getCampaignDetails(String CampaignId){
+        System.debug('Hi'+CampaignId);
+        return [Select Id, Name, Will_Client_Hosts_need_to_be_associated__c, PSM_Lead__c, Event_Lead__c, OwnerId from Campaign where id=:CampaignId];
+    }
+    
+    @AuraEnabled
+    public static List<CampaignMember> getSelectedCMs(List<String> CMIds){
+        List<String> campMemIdList = new List<String>();
+        
+        for(String str : CMIds)
+            campMemIdList.add(str.removeStart('\'').removeEnd('\''));
+        
+        System.debug(' CMIds ++++'+CMIds);
+        return [Select Id, Name, Client_Host__c, Flag_for_Deletion__c from CampaignMember where id=:campMemIdList];
+    }
+    
+    @AuraEnabled
+    public static List<Client_Host__c> getClientHosts(String[] campaignMemId){
+        Set<String> ids = new Set<String>();
+        for(String str : campaignMemId){
+            System.debug(' str substring ' + str);
+            ids.add(str.substring(1,19));
+        }              
+        return [Select id, Name, CampaignMember_ID__c, User__c, uniqueCode__c,Campaign_Member_Name__c, User_Name__c from Client_Host__c where CampaignMember_ID__c =: ids];
+    }
+    
+    @AuraEnabled
+    public static List<CampaignMember> getFlaggedCM (String campId){
+        system.debug(' flaggedCM ' + campId);
+        
+        return [Select Id, Name,Contact_AccName__c,Client_Host__c,Flagged_for_Deletion_User__c,Flag_For_Del_User_Name__c,Flag_for_Deletion__c,Deletion_Approved__c from CampaignMember where Flag_for_Deletion__c = true and Campaignid =:campId ];
+    }
+    
+    @AuraEnabled
+    public static List<CampaignMember> getFlaggedCMUserSpecific (String campId, String loggedInUser){
+        system.debug(' loggedInUser ' + loggedInUser);
+        
+        return [Select Id, Name,Flag_for_Deletion__c,Deletion_Approved__c,Flagged_for_Deletion_User__c from CampaignMember 
+                where Flag_for_Deletion__c = true and Flagged_for_Deletion_User__c=:loggedInUser and Campaignid =:campId ];
+    }
+    
+    @AuraEnabled
+    public static String revoke(List<String> recallCMs){
+        String success = '';
+        System.debug(' recallCMs ' + recallCMs);
+        List <CampaignMember> revokMembers = new List<CampaignMember>();
+        
+        for(CampaignMember rcm : [Select Id, Name,Flag_for_Deletion__c,Flagged_for_Deletion_By_User__c,Deletion_Rejected__c,Flagged_for_Deletion_User__c from CampaignMember where id IN:recallCMs ]){
+            rcm.Flag_for_Deletion__c = false;
+            rcm.Deletion_Rejected__c = true;
+            rcm.Flagged_for_Deletion_User__c=null;
+            rcm.Flagged_for_Deletion_By_User__c=null;
+            revokMembers.add(rcm);                               
+        }
+        
+        try{
+            
+            update revokMembers;
+            success='Successfully Revoked';
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        
+        return success;
+        
+    }
+    
+    @AuraEnabled
+    public static String deleteApprovedCM (List<String> campMemIds){
+        system.debug(' flaggedCM ' + campMemIds);
+        String success='';
+        List<CampaignMember> approveList = new List<CampaignMember>();
+        Set<Id> cmIds = new Set<Id>();
+        
+        for(CampaignMember del : [Select Id, Name,Flag_for_Deletion__c,Deletion_Approved__c,Flagged_for_Deletion_User__c from CampaignMember where id IN:campMemIds ]){
+            del.Deletion_Approved__c = true;
+            approveList.add(del); 
+            cmIds.add(del.Id);
+        }
+        
+        
+        
+        try{
+            update approveList;
+        }Catch(Exception e){
+            system.Debug(' approveList Exception e'+e.getStackTraceString()); 
+        }
+        
+        try{
+            delete approveList;
+            delete [Select id from Client_Host__c where CampaignMember_ID__c =: cmIds];
+            success='Successfully Deleted';
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        
+        return success;
+    }
+    
+    @AuraEnabled
+    public static String deleteRejectCM (List<String> campMemIds){
+        
+        system.debug(' flaggedForRejectCM ' + campMemIds);
+        String success='';
+        List<CampaignMember> rejectList = new List<CampaignMember>();
+        
+        for(CampaignMember cm : [Select id, name, Flag_for_Deletion__c,Flagged_for_Deletion_User__c,Flagged_for_Deletion_By_User__c from CampaignMember where Id IN: campMemIds]){
+            cm.Flag_for_Deletion__c = false; 
+            cm.Flagged_for_Deletion_User__c=null;
+            cm.Flagged_for_Deletion_By_User__c=null;
+            rejectList.add(cm);
+        }
+        system.debug(' flaggedForRejectCM ' + rejectList);
+        try{
+            update rejectList;
+            success='Successfully Rejected';
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        
+        return success;
+    }
+    
+    @AuraEnabled
+    public static String deleteCHM(List<Id> chDeleteIds){
+        String success;
+        system.debug(' delete these CH ' + chDeleteIds);
+        List<Client_Host__c> chList = new List<Client_Host__c> ([select id, name,CampaignMember_ID__c,User__c from Client_Host__c where id IN: chDeleteIds]);
+        
+        /*  if(chDeleteIds.size() > 0 ){
+for(Id chid : chDeleteIds){
+Client_Host__c ch = new Client_Host__c();
+ch.id = chid;
+chList.add(ch);
+}
+}*/
+        try{
+            delete chList;
+            success='Successfully Deleted';
+            system.debug(' ClientHostTriggerHandler.afterDeleteDone ' + ClientHostTriggerHandler.afterDeleteDone);
+            if(! ClientHostTriggerHandler.afterDeleteDone){
+                system.debug(' delete chList; ' + chList);
+                ClientHostTriggerHandler.afterDeleteDone= true;
+                ClientHostTriggerHandler.sendDeletEmailAlert(chList);
+            }
+            
+        }Catch(Exception e){
+            system.Debug('Exception e'+e.getStackTraceString());
+            success = ''+e.getMessage();
+        }
+        return success;
+    }
+    
+    // Commented by Shweta Meshram for story #170078430 to remove rendering condn for 'Create New' button and 'Sync_To_BrightSpot ' field on Create New, Detail, Edit, Clone. 
+    /*@AuraEnabled
+    public static List<String> checkUserGroup() {
+        List<String> checkUserGrp = new List<String>();
+        List<String> allGroupIDs = new List<String>();
+        for (GroupMember gm : [SELECT Id,group.name  FROM GroupMember where UserOrGroupId =: UserInfo.getUserId() AND group.type='Regular']){
+            allGroupIDs.add(gm.group.name);
+        }   
+        for(String grpName : allGroupIDs){            
+            if(grpName == 'Skuid Access - Trade Contact List')
+                checkUserGrp.add('Skuid Access - Trade Contact List');                                 
+            if(grpName == 'Skuid Access – Modify All TCL')
+                checkUserGrp.add('Skuid Access – Modify All TCL');            
+        }                              
+        return checkUserGrp;       
+    } */ 
+    @AuraEnabled
+    public static List<String> getFieldLabel(String objName,String emptyFields) {
+        
+        List<String> retLabels = new List<String>();        
+        List<String> emptyFieldList = emptyFields.split(' ');
+        Schema.DescribeSObjectResult[] descResult = Schema.describeSObjects(new String[]{objName});        
+        Map<String,Schema.SObjectField> fieldsMap = descResult[0].fields.getMap();
+        for(String str : emptyFieldList)      {
+            retLabels.add(fieldsMap.get(str).getDescribe().getLabel());
+        }
+        
+        return retLabels;
+    }
+    
+    
+    @AuraEnabled
+    public static Boolean issyncToBrightspt(id campaignId){
+        Campaign cm = [SELECT Sync_To_BrightSpot__c FROM Campaign where id =: campaignId limit 1];
+        return cm.Sync_To_BrightSpot__c;
+    }
+    
+    @AuraEnabled
+    public static List<CampaignShare> getUsers(id campaignId){
+        List<Campaign> cm = [select Event_Lead__c,PSM_Lead__c,OwnerId from Campaign where id =:campaignId ];
+        system.debug('cam '+cm);
+        List<id> ids= new List<id> ();
+        for(Campaign a: cm){
+            if(a.Event_Lead__c!=null)
+                ids.add(a.Event_Lead__c);
+            if(a.PSM_Lead__c!=null)
+                ids.add(a.PSM_Lead__c);
+            if(a.OwnerId!=null)
+                ids.add(a.OwnerId);
+        }
+        system.debug('userIds '+ids);
+        List<CampaignShare> cs = [select id,Campaignid,UserOrGroup.name from CampaignShare where Campaignid =:campaignId and (UserOrGroupId not in : ids)];
+        List<CampaignShare> names = new List<CampaignShare>();
+        for(CampaignShare cc : cs){
+            if(!(cc.UserOrGroup.name=='Skuid Access – Modify All TCL'))
+                names.add(cc);
+        }
+        return names;    
+    }
+    
+    @AuraEnabled
+    public static Permissions checkPermissions(id campaignId){
+        Permissions permission = new Permissions();
+        Boolean hasCampaignShare, isSystemAdmin, modifyAllTCL = false, TCLGrpMember = false;
+        
+        List<CampaignShare> campaignShares= [SELECT id FROM CampaignShare where UserOrGroupId =: UserInfo.getUserId() AND CampaignId =:campaignId];
+        hasCampaignShare = campaignShares.isEmpty()?false:true;
+        
+        List<Profile> sysAdmin = [SELECT id from profile where id= :UserInfo.getProfileId() AND name ='System Administrator'];
+        isSystemAdmin = sysAdmin.isEmpty()?false:true;
+        
+        List<GroupMember> modifyAllMembers = [SELECT Id  FROM GroupMember where UserOrGroupId =: UserInfo.getUserId() AND group.type='Regular' AND group.name='Skuid Access – Modify All TCL'];
+        modifyAllTCL = modifyAllMembers.isEmpty()?false:true;
+        
+        List<GroupMember> TCLAccess = [SELECT Id  FROM GroupMember where UserOrGroupId =: UserInfo.getUserId() AND group.type='Regular' AND group.name='Skuid Access - Trade Contact List'];
+        TCLGrpMember = TCLAccess.isEmpty()?false:true;
+        
+        Campaign thisCampaign = [select id, Event_Lead__c, PSM_Lead__c, OwnerId from Campaign where id = :campaignId];
+        // Commented by Shweta Meshram for story #170078430 to remove rendering condn for Edit, Clone and Mass Update buttons. 
+        /*if(hasCampaignShare||isSystemAdmin||modifyAllTCL){
+            permission.editAccess = true;
+            permission.cloneAccess = true;
+            permission.massUpdate = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove Public group rendering condn for Edit, Clone and Mass Update buttons. 
+        if(hasCampaignShare||isSystemAdmin){
+            permission.editAccess = true;
+            permission.cloneAccess = true;
+            permission.massUpdate = true;
+        }
+        // Commented by Shweta Meshram for story #170078430 to remove rendering condn for Delete button.
+        /*if(hasCampaignShare||modifyAllTCL){
+            permission.deleteAccess = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove Public group rendering condn for Delete button.
+        if(hasCampaignShare){
+            permission.deleteAccess = true;
+        }
+        // Commented by Shweta Meshram for story #170078430 to remove Public group rendering condn for Mass Delete button.
+        /*if(isSystemAdmin || modifyAllTCL)
+            permission.deleteActn = true;*/
+        // Added by Shweta Meshram for story #170078430 to remove Public group rendering condn for Mass Delete button.
+        if(isSystemAdmin)
+            permission.deleteActn = true;
+        
+        if(modifyAllTCL)
+            permission.modifyAllAccess = true;
+        
+        // Commented by Shweta Meshram for story #170078430 to remove public Group rendering condn for Share button.
+        /*if(thisCampaign.OwnerId == UserInfo.getUserId() || isSystemAdmin || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId() || modifyAllTCL){
+            permission.shareAccess = true;
+        }*/
+        
+        // Added by Shweta Meshram for story #170078430 to remove public Group rendering condn for Share button.
+        if(thisCampaign.OwnerId == UserInfo.getUserId() || isSystemAdmin || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId()){
+            permission.shareAccess = true;
+        }
+        //Commented by Shweta Meshram for story #170078430 to remove public Group rendering condn for Mass Approve button.
+        /*if(thisCampaign.OwnerId == UserInfo.getUserId() || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId() || modifyAllTCL){
+            permission.approveRejectActn = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove public Group rendering condn for Mass Approve button.
+        if(thisCampaign.OwnerId == UserInfo.getUserId() || thisCampaign.Event_Lead__c == UserInfo.getUserId() || thisCampaign.PSM_Lead__c == UserInfo.getUserId()){
+            permission.approveRejectActn = true;
+        }
+        // Commented by Shweta Meshram for story #170078430 to remove public Group rendering condn for AddNewListMembers button.
+        //Check access for 'Add New List Member(s)' button on List Members tab
+        /*if(isSystemAdmin || modifyAllTCL || TCLGrpMember || hasCampaignShare){
+            permission.AddNewListMemberAccess = true;
+        }*/
+        // Added by Shweta Meshram for story #170078430 to remove public Group rendering condn for AddNewListMembers button.
+        if(isSystemAdmin || hasCampaignShare){
+            permission.AddNewListMemberAccess = true;
+        }
+        return permission;
+    }
+    
+    public class Permissions{
+        @AuraEnabled public boolean editAccess = false;
+        @AuraEnabled public boolean cloneAccess = false; 
+        @AuraEnabled public boolean deleteAccess = false;
+        @AuraEnabled public boolean shareAccess = false;
+        @AuraEnabled public boolean AddNewListMemberAccess = false;
+        @AuraEnabled public boolean massUpdate = false;
+        @AuraEnabled public boolean approveRejectActn = false;
+        @AuraEnabled public boolean deleteActn = false;
+        @AuraEnabled public boolean modifyAllAccess = false;
+    }
+    
+    @AuraEnabled
+    public static boolean deleteCampaign(id campaignId){
+        List <Id> cmId = new List<Id>();
+        for(CampaignMember cm : [select id from CampaignMember where CampaignId =: campaignId])
+            cmId.add(cm.id);
+        
+        List <Client_Host__c> chList = new List<Client_Host__c>([Select id from Client_Host__c where CampaignMember_ID__c IN: cmId ]);
+        
+        /*for(Client_Host__c ch:[select id,IsCampaignDelete__c from Client_Host__c where CampaignMember_ID__c IN: cmId]){
+ch.IsCampaignDelete__c = true;
+chList.add(ch);
+}*/
+        system.debug(' CHList Size before delete  ' + chList.size());
+        try{
+            // update chList;
+            delete chList;
+        }catch(Exception e){
+            system.debug('Error in deleting client host');
+        }
+        system.debug(' CMList Size ' + cmId.size());
+        system.debug(' CHList Size after delete' + chList.size());
+        
+        try{
+            delete [select id from campaign where id = :campaignId];			
+        }
+        catch(Exception e){
+            return false;
+        }		
+        
+        return true;
+    }
+    
+    @AuraEnabled
+    public static boolean shareCampaign(id campaignId,id ShareCampaignUserId){
+        try{
+            CampaignShare  camShare = new CampaignShare( CampaignId =campaignId, UserOrGroupId =ShareCampaignUserId, CampaignAccessLevel = 'Edit');            
+            insert camShare;
+        } catch(Exception e){
+            return false;
+        }        return true;
+    }
+    
+    @AuraEnabled
+    public static List<String> getRecordTypes(){
+        List<String> recType = new List<String>();
+        List<RecordType> recTypeList = [SELECT id,Name FROM RecordType where SobjectType='Contact' AND IsActive=true 
+                                        AND (Name='Strategic' OR Name='Internal Contacts' OR Name='Others')];
+        for(RecordType rt : recTypeList){
+            recType.add(rt.name);
+        }
+        return recType;
+    }
+    
+    @AuraEnabled
+    public static boolean rowAction(String rowActn,String campMemId){
+        CampaignMember cm = [SELECT id,name,Approval_status__c,Client_Host__c from CampaignMember  where id = : campMemId limit 1];
+        
+        List <Client_Host__c> chList = new List <Client_Host__c>([ Select id, Name, CampaignMember_ID__c, User__c,uniqueCode__c 
+                                                                  from Client_Host__c where CampaignMember_ID__c =:campMemId]);
+        
+        System.debug(rowActn +'-----------------'+cm);
+        System.debug('chList ' +'-----------------'+chList.size());
+        
+        
+        if(rowActn=='Approve')
+            cm.Approval_status__c = 'Approved';
+        else if(rowActn == 'Reject')
+            cm.Approval_status__c = 'Not Approved';
+        /* else if(rowActn=='Delete'){
+try{
+delete cm;
+return true;
+}catch(Exception e){                System.debug(e.getMessage()+' '+e.getStackTraceString());                return false;
+}
+}*/
+        
+        if(rowActn=='Approve' || rowActn=='Reject'){
+            Database.SaveResult SR =Database.update(cm);
+            if(SR.isSuccess())
+                return true;
+            else
+                return false;
+        }        return false;
+    }
+    
+    //  **** Replaced by the below Mass Action as a part of Enhancement # 169192296 On 20/11/2019 by Joel Dcruz *****
+    /*  @AuraEnabled
+public static boolean massAction(String massActn,List<String> campMemIds){
+List<Id> campMemIdList = new List<Id>();
+for(String str : campMemIds)
+campMemIdList.add(str.removeStart('\'').removeEnd('\''));
+
+system.debug('campMemIds  '+campMemIdList);
+List<CampaignMember> cmList = [SELECT id,name,Approval_status__c from CampaignMember  where id IN : campMemIdList ];
+List<CampaignMember> massActnList = new List<CampaignMember>(); 
+System.debug(massActn +'-----------------'+cmList);
+if(massActn=='Approve'){
+for(CampaignMember campMem: cmList){
+campMem.Approval_status__c = 'Approved';
+massActnList.add(campMem);
+}
+}         
+else if(massActn == 'Reject'){
+for(CampaignMember campMem: cmList){
+campMem.Approval_status__c = 'Not Approved';
+massActnList.add(campMem);
+} 
+}            
+else if(massActn=='Delete'){
+for(CampaignMember campMem: cmList)
+massActnList.add(campMem);
+}                
+
+if(massActn=='Approve' || massActn=='Reject'){
+Database.SaveResult[] srList = Database.update(massActnList, false);
+for (Database.SaveResult sr : srList) {
+if (sr.isSuccess()) {
+// Operation was successful, so get the ID of the record that was processed
+System.debug('Successfully inserted account. Account ID: ' + sr.getId());
+return true;
+}
+else {
+// Operation failed, so get all errors                
+for(Database.Error err : sr.getErrors()) {
+System.debug('The following error has occurred.');                    
+System.debug(err.getStatusCode() + ': ' + err.getMessage());
+System.debug('Account fields that affected this error: ' + err.getFields());
+}                    return false;
+}
+}
+} 
+else if(massActn=='Delete'){
+Database.deleteResult[]  delResList = Database.delete(massActnList, false);
+for (Database.deleteResult del : delResList) {
+if (del.isSuccess()) {
+// Operation was successful, so get the ID of the record that was processed
+System.debug('Successfully inserted account. Account ID: ' + del.getId());
+return true;
+}
+else {
+// Operation failed, so get all errors                
+for(Database.Error err : del.getErrors()) {
+//System.debug('The following error has occurred.');                    
+//System.debug(err.getStatusCode() + ': ' + err.getMessage());
+System.debug('Account fields that affected this error: ' + err.getFields());    } return false;
+}
+}
+}
+
+return false;
+} */
+    
+    @AuraEnabled
+    public static boolean massAction(String massActn,List<String> campMemIds,String loggedInUser){ // List<String> flaggedCM
+        Set<Id> campMemIdList = new Set<Id>();
+        Map<Id,List<Client_Host__c>> ExistingCMHostMap = new Map<Id,List<Client_Host__c>>();
+        
+        //    List<CampaignMember> delCms = new List<CampaignMember>([Select id, name from CampaignMember where id IN: flaggedCM]);
+        System.debug('massActn  '+ massActn + ' campMemIds ' + campMemIds);
+        
+        
+        for(String str : campMemIds)
+            campMemIdList.add(str.removeStart('\'').removeEnd('\''));
+        
+        //Added By Joel... 14/11/2019       
+        system.debug('campMemIds  '+campMemIdList);
+        List<CampaignMember> cmList = [SELECT id,name,Approval_status__c,Flag_for_Deletion__c,Deletion_Approved__c,Flagged_for_Deletion_User__c,Flagged_for_Deletion_By_User__c 
+                                       from CampaignMember where id IN : campMemIdList ];
+        
+        List <Client_Host__c> chList = new List <Client_Host__c>([ Select id, Name, CampaignMember_ID__c, User__c,uniqueCode__c 
+                                                                  from Client_Host__c where CampaignMember_ID__c =:campMemIdList]);
+        integer counter=0;
+        if(chList.size() > 0){
+            for(Id cmId : campMemIdList){
+                for(Client_Host__c ch : chList ){
+                    counter++;
+                    // System.debug(' CMwithHostMap ' + ExistingCMHostMap + ' counter '+counter);
+                    if(! ExistingCMHostMap.containsKey(cmId)){
+                        ExistingCMHostMap.put(cmId, new List<Client_Host__c>());
+                    }
+                    if( ExistingCMHostMap.containsKey(cmId) && cmId == ch.CampaignMember_ID__c) {
+                        ExistingCMHostMap.get(cmId).add(ch);
+                    } 
+                }
+                System.debug(' CMwithHostMap ' + cmId + ' Values size '+ ExistingCMHostMap.get(cmId).size());  
+            }
+        }
+        
+        System.debug(' ExistingCMHostMap.keySet() ' + ExistingCMHostMap.keySet() + ' Final counter '+counter);
+        // System.debug(' CMwithHostMap ' + ExistingCMHostMap.keySet() + ' Values '+ ExistingCMHostMap.Values());
+        
+        
+        //Ends
+        
+        List<CampaignMember> massActnList = new List<CampaignMember>(); 
+        List<CampaignMember> flagForDeletion = new List<CampaignMember>();  
+        
+        System.debug(massActn +'-----------------'+cmList);
+        if(massActn=='Approve'){
+            for(CampaignMember campMem: cmList){
+                campMem.Approval_status__c = 'Approved';
+                massActnList.add(campMem);
+            }
+        }         
+        else if(massActn == 'Reject'){
+            for(CampaignMember campMem: cmList){
+                campMem.Approval_status__c = 'Not Approved';
+                massActnList.add(campMem);
+            } 
+        }            
+        else if(massActn=='Delete'){
+            for(CampaignMember campMem: cmList){
+                if( ExistingCMHostMap.containsKey(campMem.Id)){
+                    if( ExistingCMHostMap.get(campMem.Id).size() > 1 ){
+                        System.debug(' CM with CH size--- ' + ExistingCMHostMap.get(campMem.Id).size() + ' LoggedInUser ' + loggedInUser);
+                        if( campMem.Flagged_for_Deletion_User__c == null){
+                            campMem.Flagged_for_Deletion_User__c = loggedInUser;
+                            campMem.Flagged_for_Deletion_By_User__c = loggedInUser;
+                        }                        		
+                        campMem.Flag_for_Deletion__c = true;
+                        campMem.Deletion_Rejected__c = false;
+                        flagForDeletion.add(campMem); 
+                        system.debug('in delete mass action'+ flagForDeletion);
+                    } 
+                    else if(! campMem.Flag_for_Deletion__c == true) massActnList.add(campMem); 
+                }  
+                else  massActnList.add(campMem);
+            }
+        } 
+        
+        if(massActn=='Approve' || massActn=='Reject'){
+            Database.SaveResult[] srList = Database.update(massActnList, false);
+            for (Database.SaveResult sr : srList) {
+                if (sr.isSuccess()) {
+                    // Operation was successful, so get the ID of the record that was processed
+                    System.debug('Successfully inserted account. Account ID: ' + sr.getId());
+                    return true;
+                }
+                else {
+                    // Operation failed, so get all errors                
+                    for(Database.Error err : sr.getErrors()) {
+                        System.debug('The following error has occurred.');                    
+                        System.debug(err.getStatusCode() + ': ' + err.getMessage());
+                        System.debug('Account fields that affected this error: ' + err.getFields());
+                    }                    return false;
+                }
+            }
+        } 
+        else if(massActn=='Delete'){
+            Set<Id> delCM = new Set <Id>();
+            if(massActnList.Size() > 0){
+                Database.deleteResult[]  delResList = Database.delete(massActnList, false);
+                for (Database.deleteResult del : delResList) {
+                    if (del.isSuccess()) {
+                        // Operation was successful, so get the ID of the record that was processed
+                        System.debug('Successfully deleted: ' + del.getId());
+                        delCM.add(del.getId());
+                    }
+                    else {
+                        // Operation failed, so get all errors                
+                        for(Database.Error err : del.getErrors()) {
+                            //System.debug('The following error has occurred.');                    
+                            //System.debug(err.getStatusCode() + ': ' + err.getMessage());
+                            System.debug('Account fields that affected this error: ' + err.getFields());    } return false;
+                    }
+                }
+            }
+            List <Client_Host__c> delCHLIst = [Select id, Name from Client_Host__c where CampaignMember_ID__c IN:delCM ];
+            System.debug('Delete these CH ' + delCHLIst);
+            
+            try{
+                delete delCHLIst;
+            }catch(Exception e){
+                System.debug('delCHLIs failed '+ e.getStackTraceString());
+            }
+            
+            System.debug(' Flagged for Deletion ' + flagForDeletion );
+            if (flagForDeletion.size() > 0 ){
+                try{
+                    update flagForDeletion;
+                    return true;
+                }Catch(Exception e){
+                    System.debug('flagForDeletion update failed '+ e.getStackTraceString());
+                    return false;
+                }
+            }
+            if (delCM.size() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    
+    @AuraEnabled
+    public static String massUpdateCampaignMembers(CampaignMember rec,List<String> selectedRowIDs, String fieldsToQuery){
+        system.debug('selectedRowIDs '+selectedRowIDs);
+        List<CampaignMember> lstCampaignMember = new List<CampaignMember>();
+        List<CampaignMember> lstCampaignMemberToUpdate = new List<CampaignMember>();
+        String msg='';
+        try {
+            String query = 'Select  Id '+fieldsToQuery+ ' from CampaignMember';
+            query+= ' Where Id IN (' + String.join(selectedRowIDs, ',') + ')';           
+            system.debug(query);
+            if (String.isNotBlank(fieldsToQuery)) {
+                system.debug('Test');
+                lstCampaignMember = Database.query(query);  
+                system.debug(lstCampaignMember);
+            }
+            for (CampaignMember cm : lstCampaignMember) {
+                if (fieldsToQuery.contains('Rank__c')) {
+                    cm.Rank__c = rec.Rank__c;
+                }
+                if(fieldsToQuery.contains('Approval_status__c')){
+                    if(cm.Approval_status__c == 'Approved' && rec.Approval_status__c == 'Approved'){
+                        msg = 'You cannot Approve already Approved record.';
+                        return msg;
+                    }
+                    else if(cm.Approval_status__c == 'Approved' && rec.Approval_status__c == 'Waiting Approval'){
+                        msg = 'You cannot change status of Approved Record to Waiting Approval.';
+                        return msg;
+                    }
+                    else
+                        cm.Approval_status__c = rec.Approval_status__c;                    
+                }
+               
+                if (fieldsToQuery.contains('Invited__c')) {
+                    cm.Invited__c = rec.Invited__c;
+                }
+                if (fieldsToQuery.contains('Response__c')) {
+                    cm.Response__c = rec.Response__c;
+                }
+                if (fieldsToQuery.contains('Attended__c')) {
+                    cm.Attended__c = rec.Attended__c;
+                }
+                if (fieldsToQuery.contains('Cancelled__c')) {
+                    cm.Cancelled__c = rec.Cancelled__c;
+                }
+                if (fieldsToQuery.contains('No_Show__c')) {
+                    cm.No_Show__c = rec.No_Show__c;
+                }
+                if (fieldsToQuery.contains('Walk_In__c')) {
+                    cm.Walk_In__c = rec.Walk_In__c;
+                }
+                if(fieldsToQuery.contains('Sync_To_BrightSpot__c')){
+                    cm.Sync_To_BrightSpot__c = rec.Sync_To_BrightSpot__c;
+                }
+                if(fieldsToQuery.contains('Last_Sync_With_BS__c')){
+                    cm.Last_Sync_With_BS__c = rec.Last_Sync_With_BS__c;
+                }
+                if (fieldsToQuery.contains('Attendee_Group__c')) {
+                    cm.Attendee_Group__c = rec.Attendee_Group__c;
+                }
+                if (fieldsToQuery.contains('Attendee_Sub_Group__c')) {
+                    cm.Attendee_Sub_Group__c = rec.Attendee_Sub_Group__c;
+                }
+                if (fieldsToQuery.contains('Invited_By_Agency__c')) {
+                    cm.Invited_By_Agency__c = rec.Invited_By_Agency__c;
+                }
+                lstCampaignMemberToUpdate.add(cm);
+            }
+            if(lstCampaignMemberToUpdate.size() > 0) {
+                update lstCampaignMemberToUpdate; 
+            }
+            return 'SUCCESS';
+        }
+        catch (Exception ex) {
+            return ex.getMessage();
+        }
+    }    
+    
+    @AuraEnabled
+    public static Object getListMembers(Id campaignId){
+        List<sObject> lstObjects;
+        if(campaignId != null){
+            lstObjects = [Select Id, Full_Name__c,Contact.Title,Contact.Account.Name,Contact.RecordType.Name,Client_Host__c,Email,Rank__c,Approval_status__c,Invited__c,
+                          Response__c,Attended__c,Cancelled__c,No_Show__c,Walk_In__c,Sync_To_BrightSpot__c,Last_Sync_With_BS__c,
+                          Attendee_Group__c,Attendee_Sub_Group__c,Invited_By_Agency__c,ContactId,Contact.Vertical_s__c from CampaignMember where CampaignId=: campaignId and 
+                          (Contact.RecordType.Name='Strategic' OR Contact.RecordType.Name='Internal Contacts' 
+                           OR Contact.RecordType.Name='Others')];
+        } 
+        GenericListView.DataTable data = (GenericListView.DataTable) GenericListView.getData('CampaignMember', lstObjects, null, null, null);
+        return data;
+    }
+    
+    @AuraEnabled
+    public static List<campaignHistoryWrapper> getCampaignHistory(String campaignId){
+        List<campaignHistoryWrapper> historyWrapperList = new List<campaignHistoryWrapper>();
+        List<CampaignHistory> campHistList = new List<CampaignHistory>();
+        campHistList = [SELECT CreatedDate,Field, CreatedBy.name,OldValue, NewValue FROM CampaignHistory where CampaignId =: campaignId];
+        
+        for(CampaignHistory campHistory : campHistList)   {
+            historyWrapperList.add(new campaignHistoryWrapper(campHistory));
+        }                     
+        return historyWrapperList;
+    }
+    
+    public class campaignHistoryWrapper{
+        @AuraEnabled public String createdDate;
+        @AuraEnabled public String field;
+        @AuraEnabled public String createdBy;
+        @AuraEnabled public String oldValue;
+        @AuraEnabled public String newValue;       
+        public campaignHistoryWrapper(CampaignHistory campHist){
+            this.createdDate = String.valueOf((campHist.CreatedDate.date()));
+            
+            try{
+                if(campHist.Field!=null && campHist.Field!='')
+                    this.field = Schema.getGlobalDescribe().get('Campaign').getDescribe().fields.getMap().get(String.valueOf(campHist.Field)).getDescribe().getLabel();
+            }
+            catch(Exception e){ 
+                system.debug('Error '+e.getMessage());
+            }
+            if(campHist.Field == 'created'){
+                this.field = campHist.Field;
+            }
+            this.createdBy = campHist.CreatedBy.name;
+            if(campHist.Field=='StartDate' || campHist.Field=='EndDate'){
+                this.oldValue = String.valueOf(campHist.OldValue);
+                this.newValue = String.valueOf(campHist.NewValue);
+            }else{
+                this.oldValue = (String)campHist.OldValue;
+                this.newValue = (String)campHist.NewValue;    
+            }
+            
+        }
+    } 
+    
+    @AuraEnabled
+    public static boolean deleteCampaignShareUsers(Id campaignId){
+        try{
+            delete [select id from CampaignShare where id = :campaignId];
+        } catch(Exception e){            return false;
+                            }
+        return true;
+    }
+    
+    @AuraEnabled
+    public static String cloneTCL(String recId, String Name, String type, Date sdate, Date edate, String status, Boolean sync,
+                                  Boolean auto, String eLead, String pLead, String vertical, String prop, String descr,String clientHostAssociated){
+                                      
+                                      
+                                      
+                                      Campaign cam = [SELECT IsDeleted, Name, type, RecordTypeId, Status, StartDate, EndDate, CurrencyIsoCode, 
+                                                      ExpectedRevenue, BudgetedCost, ActualCost, ExpectedResponse, NumberSent, IsActive, Description, NumberOfLeads,
+                                                      NumberOfConvertedLeads, NumberOfContacts, NumberOfResponses, NumberOfOpportunities, NumberOfWonOpportunities,
+                                                      AmountAllOpportunities, AmountWonOpportunities, 
+                                                      CampaignMemberRecordTypeId, Primary_Activation__c, Description__c, Properties__c, Type__c, Vertical__c, 
+                                                      Event_Lead__c, PSM_Lead__c, ShareCampaignUser__c, Attendance_Cost__c, Attendee_Notes__c, Description_Rich__c, 
+                                                      Event_link__c, Fee__c, Key_Contacts__c, Key_Speakers__c, Location__c, Partner_Name__c, Restrictions__c, 
+                                                      Auto_Approve__c, Brightspot_Event_ID__c, Last_Sync_With_BS__c, Sync_To_BrightSpot__c, TrackCampaginMembers__c,Will_Client_Hosts_need_to_be_associated__c
+                                                      FROM Campaign where Id =:recId];
+                                      
+                                      List<CampaignMember> camMember = [SELECT IsDeleted, CampaignId, LeadId, ContactId, Contact.Marked_for_Deletion__c, Status, HasResponded, FirstRespondedDate, 
+                                                                        CurrencyIsoCode, Salutation, Name, FirstName, LastName, Title, Street, City, State, PostalCode,
+                                                                        Country, Email, Phone, Fax, MobilePhone, Description, DoNotCall, HasOptedOutOfEmail, 
+                                                                        HasOptedOutOfFax, LeadSource, CompanyOrAccount, Type, LeadOrContactId, LeadOrContactOwnerId, 
+                                                                        Attended__c, Walk_In__c, Rank__c, No_Show__c, Full_Name__c, Invited__c, Response__c, Cancelled__c,
+                                                                        Campaign_Member_18_Digit_ID__c, Presenter__c, Approval_status__c, Attendee_Group__c, 
+                                                                        Attendee_Sub_Group__c, Company__c, Invited_By_Agency__c, Last_Sync_With_BS__c, NBCU_Contact__c, 
+                                                                        Sync_To_BrightSpot__c,Client_Host__c FROM CampaignMember where CampaignId=:recId];
+                                      
+                                      
+                                      Campaign cloneCam = cam.clone(false, true, false, false);
+                                      cloneCam.Name = Name;
+                                      cloneCam.Type = type;
+                                      cloneCam.StartDate = sdate;
+                                      cloneCam.EndDate = edate;
+                                      cloneCam.Status = status;
+                                      cloneCam.Sync_To_BrightSpot__c = cam.Sync_To_BrightSpot__c;
+                                      cloneCam.Auto_Approve__c = auto;
+                                      cloneCam.Vertical__c = vertical;
+                                      cloneCam.Properties__c = prop;                             
+                                      cloneCam.Description = descr;
+                                      cloneCam.Will_Client_Hosts_need_to_be_associated__c = clientHostAssociated;
+                                      
+                                      try{
+                                          insert cloneCam;
+                                          System.debug('Success>> '+cloneCam.Id);
+                                      }catch(Exception e){
+                                          System.debug('Error>> '+e.getMessage());
+                                          return null;
+                                      }
+                                      Map<Id,CampaignMember> cloneCamMemMap = new Map<Id,CampaignMember>();
+                                      
+                                      for(CampaignMember originalCM:camMember){
+                                          CampaignMember newCM = originalCM.clone(false,true,false,false);
+                                          newCM.CampaignId = cloneCam.Id;                                          
+                                          if(newCM.Contact.Marked_for_Deletion__c==false)
+                                              cloneCamMemMap.put(originalCM.Id,newCM);
+                                      }
+                                      try{
+                                          insert cloneCamMemMap.values();
+                                      }catch(Exception e){
+                                          System.debug('member Error>> '+e.getMessage());
+                                          return cloneCam.Id;
+                                      }
+                                      
+                                      //clone client host
+                                      
+                                      List <Client_Host__c> CHList = new List <Client_Host__c>();
+                                      
+                                      for(Client_Host__c ch: [select id, User__c, CampaignMember_ID__c, name, User_Name__c, Campaign_Member_Name__c FROM Client_Host__c where CampaignMember_ID__c IN:cloneCamMemMap.keySet()]) {
+                                          system.debug('hey inside client host loop'+ch.Campaign_Member_Name__c+' '+ch.User_Name__c);
+                                          
+                                          Client_Host__c clonedCH = ch.clone(false,true,false,false);
+                                          clonedCH.CampaignMember_ID__c = cloneCamMemMap.get(ch.CampaignMember_ID__c).id; 
+                                          CHList.add(clonedCH);
+                                      }
+                                      try{
+                                          insert CHList;									                                                                        
+                                      }catch(Exception e){
+                                          System.debug('client host Error>> '+e.getMessage());
+                                      }								                                                            
+                                      return cloneCam.Id;
+                                  }
+}
+
+***************************************************************************************************************************************************************************************
+COMPONENT:			Trade_Contact_List_Clone.cmp
+***************************************************************************************************************************************************************************************
+
+<aura:component implements="force:appHostable,force:hasSObjectName,force:lightningQuickActionWithoutHeader,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,lightning:hasPageReference,lightning:actionOverride" 
+                access="global" extends="c:Base" controller="TCL_Create_ctrl">
+    <aura:attribute name="isOpen" type="boolean" default="false" access="global"/>
+    <aura:attribute name="error" type="Boolean" default="false" access="global"/>
+    <aura:attribute name="errMessage" type="String"  access="global"/>    
+    <aura:attribute name="isClone" type="Boolean" default="false" access="global"/>
+    <aura:attribute name="recordId" type="String" access="global" default=""/>
+    <aura:attribute name="localrecordId" type="String" access="global" default=""/>
+    <aura:attribute name="isSyncToBrightspot" type="boolean" default="false" access="global"/>
+    <aura:attribute name="isLastSyncWithBS" type="boolean" default="false" access="global"/>
+    <!--Events-->
+    <aura:registerEvent name="closeModal" type="c:TCLCloseModal"/>
+    <aura:handler name="init" value="{!this}" action="{!c.onInit}"/>
+    
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-modal_medium slds-fade-in-open">
+        <div class="slds-modal__container"> 
+            <div class="slds-modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="{!c.closeModal}">
+                    <lightning:icon iconName="utility:close" size="medium" variant="bare"/>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <aura:if isTrue="{!v.isClone}">
+                    <h2 id="header43" class="slds-text-heading--medium">Clone Record</h2>
+                    <aura:set attribute="else">
+                        <h2 id="header43" class="slds-text-heading--medium">Edit Record</h2>
+                    </aura:set>
+                </aura:if>
+                
+            </div>
+            <div class="slds-modal__content slds-p-around--medium">
+                <lightning:recordEditForm
+                                          onsubmit="{!c.cloneRecord}"
+                                          onsuccess="{!c.handleSuccess}"
+                                          recordId="{!v.localrecordId}"
+                                          objectApiName="Campaign"
+                                          aura:id="CreateTCL"
+                                          recordTypeId="{!$Label.c.TCLRecordType}"
+                                          density="comfy">
+                    
+                    <!-- the messages component is for error messages -->
+                    <lightning:messages aura:id="Messages"/>
+                    <div class="slds-form slds-form_compound">
+                        <!--form class="slds-form-element slds-form-stacked" style="margin:10px"-->
+                        <lightning:card>
+                            <aura:set attribute = "title">
+                                
+                                CAMPAIGN INFO
+                                <aura:if isTrue="{!v.error}">
+                                    <p class="slds-align_absolute-center requiredText">Required Fields Missing : &nbsp;<ui:outputText value="{!v.errMessage}"/></p>
+                                    <aura:set attribute="else">
+                                        <p> </p>
+                                    </aura:set>
+                                </aura:if>
+                            </aura:set>
+                            <lightning:layout>
+                                <lightning:layoutitem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Name" aura:id="requiredField" />
+                                    <lightning:inputField fieldName="Type__c" />                                               
+                                    <lightning:inputField fieldName="StartDate" />
+                                    <lightning:inputField fieldName="EndDate" />
+                                    <lightning:inputField fieldName="Status" />                                           
+                                    <!--aura:if isTrue="{!v.isSyncToBrightspot}"-->
+                                        <lightning:inputField fieldName="Sync_To_BrightSpot__c" aura:id="syncToBrightspt" onchange="{!c.showLastSync}"/>
+                                        <!--aura:set attribute="else">
+                                            <p> </p>
+                                        </aura:set>
+                                    </aura:if--> 
+                                    <lightning:inputField fieldName="Auto_Approve__c" />
+                                    <lightning:inputField fieldName="Event_Lead__c" />
+                                    <lightning:inputField fieldName="PSM_Lead__c" />
+                                    
+                                </lightning:layoutitem>
+                                <lightning:layoutitem size="6" padding="around-small">
+                                    <lightning:inputField fieldName="Vertical__c" aura:id="requiredField" class="requiredClass"/>
+                                    <lightning:inputField fieldName="Properties__c" aura:id="requiredField" class="requiredClass"/>
+                                    <lightning:inputField fieldName="Description" />
+                                    <lightning:inputField fieldName="Will_Client_Hosts_need_to_be_associated__c" aura:id="requiredField" class="requiredClass"/>
+                                    <aura:if isTrue="{!v.isLastSyncWithBS}">
+                                        <lightning:inputField fieldName="Last_Sync_With_BS__c" disabled="true"/>
+                                        <aura:set attribute="else">
+                                            <p> </p>
+                                        </aura:set>
+                                    </aura:if>
+                                </lightning:layoutitem>
+                            </lightning:layout>
+                            <aura:set attribute="footer">
+                                <lightning:button variant="brand" label="Save" type="submit"/>
+                                <lightning:button class="slds-button slds-button_neutral" label="Cancel" onclick="{!c.closeModal}"/>
+                            </aura:set>
+                        </lightning:card>
+                        
+                        <!--/form-->
+                    </div>
+                </lightning:recordEditForm>
+            </div>
+        </div>
+    </div>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+    
+</aura:component>
+
+***************************************************************************************************************************************************************************************
+JS CONTROLLER:		Trade_Contact_List_CloneController.js
+***************************************************************************************************************************************************************************************
+
+({
+    onInit : function(component, event, helper) {
+        component.set("v.localrecordId",component.get("v.recordId"));
+        // Commented by Shweta Meshram for story #170078430 to remove rendering condn for 'Sync_To_BrightSpot ' field on Create New, Detail, Edit, Clone. 
+        /*helper.callServer(component,"c.checkUserGroup",function(response){
+            if(response){                
+                if(response.includes('Skuid Access – Modify All TCL'))                
+                    component.set("v.isSyncToBrightspot",true);
+            }
+        });*/
+        helper.callServer(component,"c.issyncToBrightspt",function(response){
+            if(response === true){              
+                component.set("v.isLastSyncWithBS", true);
+            } else{
+                component.set("v.isLastSyncWithBS", false);
+            }
+        },{
+            campaignId : component.get("v.recordId")
+        });
+    },
+    
+    showLastSync : function(component, event, helper) {
+        console.log('inside');        
+        var syncToBrightspt = component.find('syncToBrightspt').get("v.value");
+        console.log(syncToBrightspt);
+        if(syncToBrightspt)
+            component.set("v.isLastSyncWithBS", true);
+        else
+            component.set("v.isLastSyncWithBS", false);
+    },
+    
+    cloneRecord: function(component, event, helper) {
+        
+        event.preventDefault(); // stop form submission
+        var eventFields = event.getParam("fields");
+        eventFields["Field__c"] = "Test Value";
+        var emptyFields = '';
+        var reqFieldList = component.find('requiredField');
+        if(reqFieldList != null  && reqFieldList != undefined){
+            reqFieldList.forEach(function(field){
+                if(field.get("v.value") === null || field.get("v.value") === undefined || field.get("v.value") === ''){
+                    console.log('field'+field.get("v.value") );
+                    emptyFields = emptyFields + field.get("v.fieldName") + ' ';                                         
+                    $A.util.addClass(field,'slds-has-error');
+                    field.setErrors('v.errors',[{message : "Complete this field."}]);
+                    component.set('v.error',true);
+                    valid = false;
+                    error = true;
+                }
+            });
+            if(emptyFields!=null && emptyFields!='' && emptyFields.length > 0){
+                helper.callServer(component,"c.getFieldLabel",function(response){
+                    console.log(' not inside empty fields '+response);
+                    if(response){
+                        console.log('empty fields '+response);
+                        component.set('v.errMessage',response.toString());
+                        var action = component.get("c.cloneTCL");
+                        action.setParams({ "recId" : recordId });
+                        action.setCallback(this, function(response){
+                            var result = response.getReturnValue();
+                           // alert('Alert 1@@@'+result);
+                        });
+                        $A.enqueueAction(action);
+                    }
+                },
+                                  {
+                                      'objName' : 'Campaign',
+                                      'emptyFields' : emptyFields
+                                  });}
+        }
+        
+       // alert("Name > "+eventFields["Name"])
+        //component.find('CreateTCL').submit(eventFields);
+        var recordId = component.find("CreateTCL").get("v.recordId");
+        //alert("Id : "+component.find("CreateTCL").get("v.recordId"));
+        
+        var action = component.get("c.cloneTCL");
+        action.setParams({ "recId" : recordId, 
+                          "Name" : eventFields["Name"],
+                          "type" : eventFields["Type__c"],
+                          "sdate" : eventFields["StartDate"],
+                          "edate" : eventFields["EndDate"],
+                          "status" : eventFields["Status"],
+                          //"sync" : eventFields["Sync_To_BrightSpot__c"],
+                          "auto" : eventFields["Auto_Approve__c"],
+                          "eLead" : eventFields["Event_Lead__c"],
+                          "pLead" : eventFields["PSM_Lead__c"],
+                          "vertical" : eventFields["Vertical__c"],
+                          "prop" : eventFields["Properties__c"],
+                          "descr" : eventFields["Description"], 
+                          "clientHostAssociated" : eventFields["Will_Client_Hosts_need_to_be_associated__c"], 
+                         });
+        action.setCallback(this, function(response){
+            var result = response.getReturnValue();
+            //alert('Alert 2@@@@'+result);
+            console.log('result  ',+JSON.stringify(result));
+            if(result!=null){
+            var setEvent = $A.get("e.c:TCLCloseModal");
+            setEvent.setParams({"action": 'cloneSuccess' + result});
+            setEvent.fire();
+            }
+        });
+        $A.enqueueAction(action);
+    },
+    
+   
+    /*handleSuccess: function(component, event,helper) {
+        alert("success");
+        event.preventDefault();
+        var setEvent = $A.get("e.c:TCLCloseModal");
+        
+        var recordId = event.getParams().response.id;
+        alert("redirect "+recordId)
+        setEvent.setParams({"action": 'cloneSuccess' + recordId});
+        
+        setEvent.fire();
+    },*/
+    
+    closeModal: function(component, event, helper) {
+        var setEvent = $A.get("e.c:TCLCloseModal");
+        if(component.get("v.isClone") == true){
+            setEvent.setParams({"action": 'cloneClose'});
+        } else {
+            setEvent.setParams({"action": 'editClose'});
+        }
+        setEvent.fire();
+    },
+    
+})
+
+
+***************************************************************************************************************************************************************************************
+STYLE:				Trade_Contact_List_Clone.css
+***************************************************************************************************************************************************************************************
+
+
+.THIS .slds-modal__container{
+    /*width: 120vw;
+    height: 100vh;*/
+    max-width: 70rem !important;
+    width:70% !important;
+}
+
+.THIS .slds-modal__header{
+    background-color: rgba(79, 76, 133, 1);;
+    font-weight: bold;
+    color: white;
+}
+
+.THIS .slds-modal__container{
+    width: 600%;
+    max-width: max-content;
+}
+
+.THIS .right-align{
+    padding-left: 1050px;
+}
+
+
+.THIS .slds-align_absolute-center{
+
+    
+    font-size: medium;
+}
+
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+
+Trade_Contact_List
+
+
+COMPONENT:				Trade_Contact_List.cmp
+JS CONTROLLER:			Trade_Contact_ListController.js
+
+
+***************************************************************************************************************************************************************************************
+COMPONENT:				Trade_Contact_List.cmp
+***************************************************************************************************************************************************************************************
+<aura:component implements="force:appHostable,force:hasSObjectName,force:lightningQuickActionWithoutHeader,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,lightning:hasPageReference,lightning:actionOverride,lightning:isUrlAddressable" access="global" extends="c:Base">
+	
+    <aura:attribute name="recordId" type="string" default="" access="global"/>
+     <aura:handler name="init" value="{!this}" action="{!c.onInit}" />
+    <div class="slds-box slds-theme_default">               
+    <c:Trade_Contact_Lists_Button recordId="{!v.recordId}"/>
+    <lightning:tabset variant="scoped">
+        <lightning:tab label="LIST INFO">
+            <c:TradeContactList_DetailPage recordId="{!v.recordId}"/>
+        </lightning:tab>
+        <lightning:tab label="LIST MEMBERS">
+            <c:TCL_List_Members recordId="{!v.recordId}"/>
+        </lightning:tab>
+        <lightning:tab label="COLLABORATORS">
+            <c:Trade_Contact_Lists_Collaborators recordId="{!v.recordId}"/>
+        </lightning:tab>
+        <lightning:tab label="HISTORY">
+            <c:TCL_History recordId="{!v.recordId}"/>
+        </lightning:tab>
+    </lightning:tabset>
+    </div>
+</aura:component>
+
+***************************************************************************************************************************************************************************************
+JS CONTROLLER:			Trade_Contact_ListController.js
+***************************************************************************************************************************************************************************************
+
+({
+	onInit : function(component, event, helper) {
+		var pageReference = component.get('v.pageReference');
+        if(pageReference!=null && pageReference.state.c__recordId!=undefined){
+            component.set('v.recordId',pageReference.state.c__recordId);
+        }
+	}
+})
+***************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************

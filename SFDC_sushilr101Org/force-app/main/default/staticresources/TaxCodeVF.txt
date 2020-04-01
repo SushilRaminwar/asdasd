@@ -1,0 +1,1382 @@
+<apex:page lightningstylesheets="true" standardController="International_Tax_Credit__c" extensions="DocumentRequestListExtention" id="pg"  tabStyle="International_Tax_Credit__c" action="{!show}">
+<!--<div id="my-timeline" style="height:300px; border: 1px solid #aaa">-->
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <apex:form id="frm">
+  <style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 80%;  
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 2px;           
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+#p1nullValue {
+    color: blue;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 20px; 
+    //background-color:hsla(290,60%,70%,0.3);
+}
+.dateFormat{
+   visibility:hidden;
+}
+
+</style>
+
+<script>
+
+
+    function OpenVfpage(field){
+    //  alert(field);
+        var url="/apex/AttachmentView?id=" + field;
+        newWin=window.open(url,   'Popup','height=500,width=600,left=100,top=100,resizable=no,scrollbars=yes,toolbar=no,status=no');
+        if(window.focus){
+            newWin.focus();
+        }
+    }
+
+    var previousOnload = window.onload; 
+    var cnt = 0;
+    var pers = 0;
+    window.onload = function() { 
+        calcul();
+        //$('.lookupIcon').attr("style", "display: inline !important");
+        
+    }
+         
+    function recSave(){
+        calcul();
+        updateitc();
+        calcul();
+        var url=document.location.host+'/'+'{!International_Tax_Credit__c.id}';
+        var urls= "https://"+document.location.host+'/'+'{!International_Tax_Credit__c.id}';
+    }
+    
+    function onCompleteFn(){
+        var url=document.location.host+'/'+'{!International_Tax_Credit__c.id}';
+        var urls= "https://"+document.location.host+'/'+'{!International_Tax_Credit__c.id}';
+        top.location=urls;
+    }
+    
+    function calcul() { 
+        var cnt = 0;
+        var pers = 0;
+       //$('.inscopePROV').closest('tr').find('.chkDueDate,.chkAssignRes,.lookupIcon').prop('disabled', !this.checked);
+        $('.inscopePROV').prop("checked","true");
+        $('.inscopePROV').closest('tr').find("img").prop('disabled', !this.checked);
+        $( "img" ).prop( "disabled", true);
+        var pickvals = '{!International_Tax_Credit__c.Incentive_Program_Workflow__c}';      
+
+        $('.pbTb1 .chkDueDate').each(function(){       
+                if(($(this).val()) !== ''){
+                 cnt++;   
+                }
+            
+        });
+  
+        $("[id$='dueDate']").each(function(){         
+                if(($(this).text()) !== ''){
+                 cnt++;   
+                }
+            
+        });
+        
+        $('.pbTb2 .chkDueDate').each(function(){
+            if(($(this).val()) !== ''){
+             cnt++;   
+            }
+        
+        });
+        $('.pbTb3 .chkDueDate').each(function(){
+            console.log('==coming');
+            if(($(this).val()) !== ''){
+             
+             cnt++;   
+            }
+        
+        });
+        $('.pbTb4 .chkDueDate').each(function(){
+            console.log('==coming');
+            if(($(this).val()) !== ''){
+             
+             cnt++;   
+            }
+        
+        });
+        $('.pbTb5 .chkDueDate').each(function(){
+            console.log('==coming');
+            if(($(this).val()) !== ''){
+             
+             cnt++;   
+            }
+        
+        });
+        $('.pbTb6 .chkDueDate').each(function(){
+            console.log('==coming');
+            if(($(this).val()) !== ''){
+             
+             cnt++;   
+            }
+        
+        });
+
+        console.log(cnt);
+        pers = ((cnt* 100)/6).toFixed(2);
+        
+        var asscnt = 0;
+        var assperc = 0;
+        var incpcnt = 0;
+        $('.pbTb1 .chkAssignRes').each(function(){
+                if(($(this).val()) !== ''){
+                 asscnt++;   
+                }
+            
+        });
+        
+        $("[id$='assignRes']").each(function(){
+                if(($(this).html()) !== ''){
+                 asscnt++;   
+                }
+            
+        });
+        $('.pbTb2 .chkAssignRes').each(function(){
+                if(($(this).val()) !== ''){
+                 asscnt++;   
+                }
+            
+        });
+        $('.pbTb3 .chkAssignRes').each(function(){
+                if(($(this).val()) !== ''){
+                 asscnt++;   
+                }
+            
+        });
+        
+        $('.pbTb4 .chkAssignRes').each(function(){
+                if(($(this).val()) !== ''){
+                 asscnt++;   
+                }
+            
+        });
+        $('.pbTb5 .chkAssignRes').each(function(){
+                if(($(this).val()) !== ''){
+                 asscnt++;   
+                }
+            
+        });
+        $('.pbTb6 .chkAssignRes').each(function(){
+                if(($(this).val()) !== ''){
+                 asscnt++;   
+                }
+            
+        });
+       console.log(pickvals +'===insidepers'+pers);
+       
+       
+       // upload calculation 
+        var uploadcnt = 0;
+        var uploadperc = 0;
+        $('.pbTb4 .chkinscope').each(function(){
+                if($(this).prop( "checked" )){
+                 incpcnt++;   
+                }
+            
+        });
+        $("[id$='inscope']").each(function(){
+        console.log('--->'+$('img',this).attr('title'));                                       
+                 if($('img',this).attr('title')==='Checked'){
+                 console.log('inside if');
+                 incpcnt++;   
+                }
+            
+        });
+        $('.pbTb5 .chkinscope').each(function(){
+                if($(this).prop( "checked" )){
+                 incpcnt++;   
+                }
+            
+        });
+        $('.pbTb6 .chkinscope').each(function(){
+                if($(this).prop( "checked" )){
+                 incpcnt++;   
+                }
+            
+        });
+        $('.pbTb1 .chkUpload').each(function(){
+                console.log('==checked=='+document.getElementsByClassName("chkUpload").checked);
+                 if($(this).prop( "checked" )){
+                 uploadcnt++;   
+                }
+            
+        });
+        $("[id$='upload']").each(function(){
+        console.log('--->'+$('img',this).attr('title'));                                       
+                 if($('img',this).attr('title')==='Checked'){
+                 console.log('inside if');
+                 uploadcnt++;   
+                }
+            
+        });
+        $('.pbTb2 .chkUpload').each(function(){
+        console.log('==checked=='+document.getElementsByClassName("chkUpload").checked);
+                 if($(this).prop( "checked" )){
+                 uploadcnt++;   
+                }
+            
+        });
+        $('.pbTb3 .chkUpload').each(function(){
+         console.log('==checked=='+document.getElementsByClassName("chkUpload"));
+        var s= document.getElementsByClassName("chkUpload").checked;
+        console.log('==checked=='+s);
+                if($(this).prop( "checked" )){
+                 uploadcnt++;   
+                }
+            
+        });
+        $('.pbTb4 .chkUpload').each(function(){
+         console.log('==checked=='+document.getElementsByClassName("chkUpload"));
+        var s= document.getElementsByClassName("chkUpload").checked;
+        console.log('==checked=='+s);
+                if($(this).prop( "checked" )){
+                 uploadcnt++;   
+                }
+            
+        });
+        $('.pbTb5 .chkUpload').each(function(){
+         console.log('==checked=='+document.getElementsByClassName("chkUpload"));
+        var s= document.getElementsByClassName("chkUpload").checked;
+        console.log('==checked=='+s);
+                if($(this).prop( "checked" )){
+                 uploadcnt++;   
+                }
+            
+        });$('.pbTb6 .chkUpload').each(function(){
+         console.log('==checked=='+document.getElementsByClassName("chkUpload"));
+        var s= document.getElementsByClassName("chkUpload").checked;
+        console.log('==checked=='+s);
+                if($(this).prop( "checked" )){
+                 uploadcnt++;   
+                }
+            
+        });
+        
+         // verified calculation 
+        var verifiedcnt = 0;
+        var verifiedperc = 0;
+        $('.pbTb1 .chkVerified').each(function(){
+                if($(this).prop( "checked" )){
+                 verifiedcnt++;   
+                }
+            
+        });
+        $('.pbTb2 .chkVerified').each(function(){
+                 if($(this).prop( "checked" )){
+                 verifiedcnt++;   
+                }
+            
+        });
+        $('.pbTb3 .chkVerified').each(function(){
+                 if($(this).prop( "checked" )){
+                 verifiedcnt++;   
+                }
+            
+        });
+        $('.pbTb4 .chkVerified').each(function(){
+                 if($(this).prop( "checked" )){
+                 verifiedcnt++;   
+                }
+            
+        });
+       $('.pbTb5 .chkVerified').each(function(){
+                 if($(this).prop( "checked" )){
+                 verifiedcnt++;   
+                }
+            
+        });
+        $('.pbTb6 .chkVerified').each(function(){
+                 if($(this).prop( "checked" )){
+                 verifiedcnt++;   
+                }
+            
+        });
+       console.log('===final==='+uploadcnt);
+       if(pickvals === 'Canada WF'){
+             console.log(cnt);
+           
+           
+           //assigDateperc = ((assigDatecnt* 100)/19).toFixed(2);
+           pers = ((cnt* 100)/incpcnt).toFixed(2);
+           assperc = ((asscnt* 100)/incpcnt).toFixed(2);
+           uploadperc = ((uploadcnt* 100)/incpcnt).toFixed(2);
+           verifiedperc = ((verifiedcnt* 100)/incpcnt).toFixed(2);
+           
+           //console.log(assigDateperc+'===pers'+pers);
+           //stingvals(pers);
+           document.getElementById("pbTb4dueid").innerHTML= pers;  
+           document.getElementById("pg:frm:pdBlock3:hiddenTodoTask").value= pers;  
+           
+           //document.getElementById("pbTb4asdateid").innerHTML= assigDateperc;  
+           //document.getElementById("pg:frm:pdBlock3:hiddenAssignDate3").value= assigDateperc;  
+           
+           document.getElementById("pbTb4assigid").innerHTML= assperc;  
+           document.getElementById("pg:frm:pdBlock3:hiddenassig3").value= assperc; 
+           
+            document.getElementById("pbTb4uploadid").innerHTML= uploadperc;  
+            document.getElementById("pg:frm:pdBlock3:hiddenDocUpload3").value= uploadperc;
+            
+            document.getElementById("pbTb4verifiedid").innerHTML= verifiedperc;  
+            document.getElementById("pg:frm:pdBlock3:hiddenDocVerified3").value= verifiedperc;
+            
+           //passStringToController();
+       }else if(pickvals === 'New York WF'){
+             console.log(cnt);
+           
+           
+           //assigDateperc = ((assigDatecnt* 100)/incpcnt).toFixed(2);
+           pers = ((cnt* 100)/incpcnt).toFixed(2);
+           assperc = ((asscnt* 100)/incpcnt).toFixed(2);
+           uploadperc = ((uploadcnt* 100)/incpcnt).toFixed(2);
+           verifiedperc = ((verifiedcnt* 100)/incpcnt).toFixed(2);
+           
+           //console.log(assigDateperc+'===pers'+pers);
+           //stingvals(pers);
+           document.getElementById("pbTb5dueid").innerHTML= pers;  
+           document.getElementById("pg:frm:pdBlock4:hiddenTodoTask").value= pers;  
+           
+           //document.getElementById("pbTb5asdateid").innerHTML= assigDateperc;  
+           //document.getElementById("pg:frm:pdBlock4:hiddenAssignDate3").value= assigDateperc;  
+           
+           document.getElementById("pbTb5assigid").innerHTML= assperc;  
+           document.getElementById("pg:frm:pdBlock4:hiddenassig3").value= assperc; 
+           
+            document.getElementById("pbTb5uploadid").innerHTML= uploadperc;  
+            document.getElementById("pg:frm:pdBlock4:hiddenDocUpload3").value= uploadperc;
+            
+            document.getElementById("pbTb5verifiedid").innerHTML= verifiedperc;  
+            document.getElementById("pg:frm:pdBlock4:hiddenDocVerified3").value= verifiedperc;
+            
+           //passStringToController();
+       }else if(pickvals === 'Illinois WF'){
+             console.log(cnt);
+           
+           
+           //assigDateperc = ((assigDatecnt* 100)/incpcnt).toFixed(2);
+           pers = ((cnt* 100)/incpcnt).toFixed(2);
+           assperc = ((asscnt* 100)/incpcnt).toFixed(2);
+           uploadperc = ((uploadcnt* 100)/incpcnt).toFixed(2);
+           verifiedperc = ((verifiedcnt* 100)/incpcnt).toFixed(2);
+           
+           //console.log(assigDateperc+'===pers'+pers);
+           //stingvals(pers);
+           document.getElementById("pbTb6dueid").innerHTML= pers;  
+           document.getElementById("pg:frm:pdBlock5:hiddenTodoTask").value= pers;  
+           
+           //document.getElementById("pbTb6asdateid").innerHTML= assigDateperc;  
+           //document.getElementById("pg:frm:pdBlock5:hiddenAssignDate3").value= assigDateperc;  
+           
+           document.getElementById("pbTb6assigid").innerHTML= assperc;  
+           document.getElementById("pg:frm:pdBlock5:hiddenassig3").value= assperc; 
+           
+            document.getElementById("pbTb6uploadid").innerHTML= uploadperc;  
+            document.getElementById("pg:frm:pdBlock5:hiddenDocUpload3").value= uploadperc;
+            
+            document.getElementById("pbTb6verifiedid").innerHTML= verifiedperc;  
+            document.getElementById("pg:frm:pdBlock5:hiddenDocVerified3").value= verifiedperc;
+            
+           //passStringToController();
+       }else if(pickvals === 'CA SFX'){
+           console.log(cnt);
+           
+           
+           //assigDateperc = ((assigDatecnt* 100)/6).toFixed(2);
+           pers = ((cnt* 100)/6).toFixed(2);
+           assperc = ((asscnt* 100)/6).toFixed(2);
+           uploadperc = ((uploadcnt* 100)/6).toFixed(2);
+           verifiedperc = ((verifiedcnt* 100)/6).toFixed(2);
+           
+           //console.log(assigDateperc+'===pers'+pers);
+           //stingvals(pers);
+           document.getElementById("pbTb3dueid").innerHTML= pers;  
+           document.getElementById("pg:frm:pdBlock2:hiddenTodoTask").value= pers;  
+           
+           //document.getElementById("pbTb3asdateid").innerHTML= assigDateperc;  
+           //document.getElementById("pg:frm:pdBlock2:hiddenAssignDate3").value= assigDateperc;  
+           
+           document.getElementById("pbTb3assigid").innerHTML= assperc;  
+           document.getElementById("pg:frm:pdBlock2:hiddenassig3").value= assperc; 
+           
+            document.getElementById("pbTb3uploadid").innerHTML= uploadperc;  
+            document.getElementById("pg:frm:pdBlock2:hiddenDocUpload3").value= uploadperc;
+            
+            document.getElementById("pbTb3verifiedid").innerHTML= verifiedperc;  
+            document.getElementById("pg:frm:pdBlock2:hiddenDocVerified3").value= verifiedperc;
+            
+           //passStringToController();
+       }else if(pickvals === 'CA PROV'){
+            console.log(cnt);
+            //assigDateperc = ((assigDatecnt* 100)/14).toFixed(2);
+            pers = ((cnt* 100)/14).toFixed(2);
+            assperc = ((asscnt* 100)/14).toFixed(2);
+            uploadperc = ((uploadcnt* 100)/14).toFixed(2);
+            verifiedperc = ((verifiedcnt* 100)/14).toFixed(2);
+            
+            console.log('===pers'+pers);
+            document.getElementById("pbTb2dueid").innerHTML= pers;  
+            document.getElementById("pg:frm:pdBlock1:hiddenTodoTask2").value= pers; 
+            
+            //document.getElementById("pbTb2asdateid").innerHTML= assigDateperc;  
+            //document.getElementById("pg:frm:pdBlock1:hiddenAssignDate2").value= assigDateperc;
+            
+            document.getElementById("pbTb2assigid").innerHTML= assperc;  
+            document.getElementById("pg:frm:pdBlock1:hiddenassig2").value= assperc; 
+            
+            document.getElementById("pbTb2uploadid").innerHTML= uploadperc;  
+            document.getElementById("pg:frm:pdBlock1:hiddenDocUpload2").value= uploadperc;
+            
+            document.getElementById("pbTb2verifiedid").innerHTML= verifiedperc;  
+            document.getElementById("pg:frm:pdBlock1:hiddenDocVerified2").value= verifiedperc;
+            
+            //var numb=document.getElementById("pg:frm:pdBlock1:hiddenTodoTask2").value; 
+            //console.log('=='+numb);
+       }else if(pickvals === 'CA FED'){
+            console.log(cnt);
+            //assigDateperc = ((assigDatecnt* 100)/22).toFixed(2);
+            pers = ((cnt* 100)/22).toFixed(2);
+            assperc = ((asscnt* 100)/22).toFixed(2);
+            uploadperc = ((uploadcnt* 100)/22).toFixed(2);
+            verifiedperc = ((verifiedcnt* 100)/22).toFixed(2);
+            
+            console.log(assperc+'===pers'+pers);
+            document.getElementById("pbTb1dueid").innerHTML= pers;  
+            document.getElementById("pg:frm:pdBlock:hiddenTodoTask1").value= pers;  
+            
+            //document.getElementById("pbTb1asdateid").innerHTML= assigDateperc;  
+            //document.getElementById("pg:frm:pdBlock:hiddenAssignDate1").value= assigDateperc;
+            
+            //var numb=document.getElementById("pg:frm:pdBlock:hiddenTodoTask1").value; 
+           // passStringToController1();
+            document.getElementById("pbTb1assigid").innerHTML= assperc;  
+            document.getElementById("pg:frm:pdBlock:hiddenassig1").value= assperc;  
+            
+            document.getElementById("pbTb1uploadid").innerHTML= uploadperc;  
+            document.getElementById("pg:frm:pdBlock:hiddenDocUpload1").value= uploadperc;
+            
+            document.getElementById("pbTb1verifiedid").innerHTML= verifiedperc;  
+            document.getElementById("pg:frm:pdBlock:hiddenDocVerified1").value= verifiedperc;
+            
+            
+            //console.log(numb1+'=='+numb);
+       }
+    } 
+   //document.getElementById("hiddenTodoTask").innerHTML=pers;  
+            
+            //var du1='{!passTodoTask}';
+            //console.log('===du111==='+du1);
+    function inscopePROVs(){
+        $(document).on('change', '.inscopePROV', function() {
+                $(this).closest('tr').find('.chkDueDate,.chkAssignRes').prop('disabled', !this.checked);
+            })
+    }
+    
+    function testing(sl){
+        
+        console.log(sl.value);
+    }
+      
+     
+</script>
+     
+     <apex:actionFunction name="holding" action="{!details}" onComplete="alert('After apex method');"/>
+      <apex:actionFunction name="updateitc" action="{!updateITCA}" reRender="pdBlock,pdBlock1,pdBlock2" oncomplete="onCompleteFn();"/>
+      <apex:pageBlock id="pdBlock" title="Document Request List" rendered="{!checkCAFED}">
+      
+      <apex:pageblockButtons location="top">
+          <apex:commandButton Id="pgb1" value="Update" onclick="recSave();return false;" rendered="{!IF(International_Tax_Credit__c.Incentive_Program_Workflow__c != Null,true,false)}" />
+      </apex:pageblockButtons>
+      
+      <div id="dashbordsDiv">
+      
+            <!-- Due Date -->
+            <table>
+            <th>Document Due Date</th>  
+            <th>Assigned Resource</th> 
+            <th>Documents Upload </th>
+            <th>Documents Verified</th>  
+            <tr>            
+            <td>
+           <apex:chart height="100px" width="200px" data="{!pieDataDueDate}" >                
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d"/>                           
+               <!--  <apex:legend position="bottom"/>  -->
+         </apex:chart>
+         </td>
+         <td>
+         <!--Assigned Resource-->
+         <apex:chart height="100px" width="200px" data="{!pieDataAssignedResource}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d"  />
+                <!--<apex:legend position="right"/> -->
+         </apex:chart>
+         
+         </td>
+         <!--Upload -->
+         <td>
+         <apex:chart height="100px" width="200px" data="{!pieDataUpload}">  
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>-->
+         </apex:chart>
+         </td>
+         <!-- Verified -->
+         <td>
+         <apex:chart height="100px" width="200px" data="{!pieDataVerified}">  
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" /> 
+               <!-- <apex:legend position="right"/>-->
+         </apex:chart>
+         </td>
+         </tr>
+         </table>
+      </div>
+      
+      <div id="myDIV">
+          <apex:pageBlockTable value="{!intenationalTaxWrapperList}" var="tx" styleClass="pbTb1">
+              <apex:column headerValue="International Tax Credit">
+                  <apex:inputField value="{!tx.taxCreadit.International_Tax_Credit__r.Name}"/>
+              </apex:column>
+        
+            <!--   
+                 <apex:column headerValue="Type" id="type">
+                 <apex:outputlink value="/{!tx.taxCreadit.Id}" target="_blank">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                 <apex:outputField value="{!tx.taxCreadit.Attachment_Version__c}"/>
+             
+                 </apex:column>
+                 <apex:outputField />   
+           -->  
+              
+           
+              <!--
+              <apex:column headerValue="Delete">
+                  <apex:inputCheckbox />
+              </apex:column>
+              -->
+            <apex:column headerValue="Inscope" >  
+                <apex:inputCheckbox styleClass="inscopePROV" onclick="inscopePROVs();" disabled="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}"/>           
+            </apex:column>
+            <apex:column headerValue="Document Types">  
+                  <apex:outputlink value="/apex/InternationalTaxCreditAttachment1?id={!tx.taxCreadit.Id}" target="_blank" rendered="{!AND(tx.taxCreadit.Recap_Report__c=null,tx.taxCreadit.Documents_Verified__c=false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputlink value="{!IF(BEGINS(LOWER(tx.taxCreadit.Recap_Report__c), 'http'), tx.taxCreadit.Recap_Report__c, 'http://'+tx.taxCreadit.Recap_Report__c)}" target="_blank" rendered="{!AND(tx.taxCreadit.Attachment_Version__c='Recap Report',tx.taxCreadit.Recap_Report__c!=null)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputText rendered="{!If(tx.taxCreadit.Documents_Verified__c == true, true, false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputText> 
+            </apex:column>           
+          <!--   
+             <apex:column headerValue="Document Assigned Date">
+             <apex:inputField styleClass="chkAssigDate" value="{!tx.taxCreadit.Documents_Assigned_Date__c}"/>
+            </apex:column>
+          -->
+            <apex:column headerValue="Document Due Date">
+                <apex:inputField styleClass="chkDueDate" value="{!tx.taxCreadit.Doc_Due_Date__c}" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}"/>
+                <apex:Outputtext id="dueDate" styleClass="chkDueDate" value="{0,date,MM/dd/yyyy}" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}"><apex:param value="{!tx.taxCreadit.Doc_Due_Date__c}" /></apex:outputText>
+            </apex:column>
+            
+           <apex:column headerValue="NUDGE">
+                <apex:commandButton value="NUDGE" disabled="{!If(tx.taxCreadit.Assigned_Resource__c == null,True,False)}" action="{!updateSendMail}" reRender="dummy" >
+                <apex:param name="attID" value="{!tx.taxCreadit.Id}" assignTo="{!attIdtoSendMail}"/>
+                </apex:commandButton>
+            </apex:column> 
+            
+            <apex:column headerValue="Assigned Resource">
+                <apex:inputField styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__c}" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}"/>
+                <apex:outputText id="assignRes" styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__r.name}" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}"/>  
+                
+            </apex:column>
+            <apex:column headerValue="Documents Upload">
+                <apex:inputField value="{!tx.taxCreadit.Documents_Upload__c}" styleClass="chkUpload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}"/>
+                <apex:outputField id="upload" value="{!tx.taxCreadit.Documents_Upload__c}" styleClass="chkUpload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}"/>
+            </apex:column>
+            
+            
+            
+            <apex:column headerValue="Documents Verified" >
+                <apex:outputText rendered="{!IF(OR($Profile.Name =='System Administrator',$Profile.Name =='Tax Credit'), false, true)}">N/A</apex:outputText>&nbsp;
+                <apex:inputField styleClass="chkVerified" value="{!tx.taxCreadit.Documents_Verified__c}" rendered="{!IF(OR($Profile.Name =='System Administrator',$Profile.Name =='Tax Credit'), true , false)}"/>
+                <apex:commandLink value="View" onclick="OpenVfpage('{!tx.taxCreadit.Id}');"/>
+            </apex:column> 
+            <!--    
+            <apex:column headerValue="Aging">
+                <apex:outputField value="{!tx.taxCreadit.Agings__c}"/>
+            </apex:column>
+            <apex:column headerValue="Days Out">
+                <apex:outputField value="{!tx.taxCreadit.Days_Out__c}"/>      
+            </apex:column>  
+            -->
+          </apex:pageBlockTable>
+       <!--   
+          <label for="pbTb1asdateid" style="color:blue;">% Doc Assigned Date = </label>  <output  type="text" class="pbTb1assigdate" id="pbTb1asdateid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        -->
+        <!--
+          <apex:inputHidden id="hiddenAssignDate1" value="{!passAssignDate}"/>  
+          -->        
+          <label for="pbTb1dueid" style="color:blue;">% Document Due Date = </label>  <output  type="text" class="pbTb1due" id="pbTb1dueid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+          <apex:inputHidden id="hiddenTodoTask1" value="{!passTodoTask1}"/>
+          
+          
+          
+          <label for="pbTb1assig" style="color:blue;">% Document Assigned Resource = </label> <output type="text" class="pbTb1assig" id="pbTb1assigid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
+          <apex:inputHidden id="hiddenassig1" value="{!passAssignRes}"/>
+          
+          <label for="pbTb1uploadid" style="color:blue;">% Documents Upload = </label>  <output  type="text" class="pbTb1upload" id="pbTb1uploadid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    
+          <apex:inputHidden id="hiddenDocUpload1" value="{!passDocUpload1}"/>
+          
+          <label for="pbTb1verifiedid" style="color:blue;">% Documents Verified = </label>  <output  type="text" class="pbTb1verified" id="pbTb1verifiedid" style="color:blue   ;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenDocVerified1" value="{!passDocVerified1}"/>
+          
+          <apex:actionFunction name="passStringToController1" action="{!myMethod1}" rerender="myHiddenField1"/>
+      </div>
+ </apex:pageBlock>
+ 
+ <!--------PROV---------->
+ 
+      <apex:pageBlock id="pdBlock1" title="Document Request List" rendered="{!checkCAPROV}">
+      
+      <apex:pageblockButtons location="top">
+          <apex:commandButton value="Update" onclick="recSave();return false;" rendered="{!IF(International_Tax_Credit__c.Incentive_Program_Workflow__c != Null,true,false)}" />
+      </apex:pageblockButtons>
+      
+      <div id="dashbordsDiv1">
+      
+            <!-- Due Date -->
+            <table>
+            <th>Document Due Date</th>
+            <th>Assigned Resource</th>
+            <th>Documents Upload </th>
+            <th>Documents Verified</th>
+            <tr>
+            <td>
+           <apex:chart height="100px" width="200px" data="{!pieDataDueDate}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         <td>
+         <!--Assigned Resource-->
+         <apex:chart height="100px" width="200px" data="{!pieDataAssignedResource}">    
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+               <!-- <apex:legend position="right"/> --> 
+         </apex:chart>
+         
+         </td>
+         <!--Upload -->
+         <td>
+         <apex:chart height="100px" width="200px" data="{!pieDataUpload}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         <!-- Verified -->
+         <td>
+         <apex:chart height="100px" width="200px" data="{!pieDataVerified}">   
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d"/>
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         </tr>
+         </table>
+      </div>
+      
+      
+      <div id="myDIV1">
+          <apex:pageBlockTable value="{!intenationalTaxWrapperList}" var="tx" styleClass="pbTb2">
+          
+              <apex:column headerValue="International Tax Credit">
+                  <apex:inputField value="{!tx.taxCreadit.International_Tax_Credit__r.Name}"/>
+              </apex:column>
+              <!--
+              <apex:column headerValue="Type" id="type">
+                  <apex:outputField value="{!tx.taxCreadit.Attachment_Version__c}"/>
+              </apex:column>
+              --> 
+              <!-- chkAssigDate, .chkDueDate,.chkAssignRes-->
+            <apex:column headerValue="Inscope" >
+                <apex:inputCheckbox styleClass="inscopePROV" onclick="inscopePROVs();" disabled="{!tx.taxCreadit.Documents_Verified__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>                
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>                
+            </apex:column>
+            
+           <apex:column headerValue="Document Types">  
+                  <apex:outputlink value="/apex/InternationalTaxCreditAttachment1?id={!tx.taxCreadit.Id}" target="_blank" rendered="{!AND(tx.taxCreadit.Recap_Report__c=null,tx.taxCreadit.Documents_Verified__c=false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputlink value="{!IF(BEGINS(LOWER(tx.taxCreadit.Recap_Report__c), 'http'), tx.taxCreadit.Recap_Report__c, 'http://'+tx.taxCreadit.Recap_Report__c)}" target="_blank" rendered="{!AND(tx.taxCreadit.Attachment_Version__c='Recap Report',tx.taxCreadit.Recap_Report__c!=null)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputText rendered="{!If(tx.taxCreadit.Documents_Verified__c == true, true, false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputText> 
+            </apex:column>                       
+            
+        <!-- 
+            <apex:column headerValue="Document Assigned Date">
+               <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:inputField styleClass="chkAssigDate" value="{!tx.taxCreadit.Documents_Assigned_Date__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+            </apex:column>
+         -->   
+            <apex:column headerValue="Document Due Date" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}" >
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:inputField styleClass="chkDueDate" value="{!tx.taxCreadit.Doc_Due_Date__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+            </apex:column>
+            <apex:column headerValue="Document Due Date" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}" >
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:Outputtext id="dueDate" styleClass="chkDueDate" value="{0,date,MM/dd/yyyy}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"><apex:param value="{!tx.taxCreadit.Doc_Due_Date__c}" /></apex:outputText>
+            </apex:column>
+            
+            <apex:column headerValue="NUDGE" >
+                <apex:commandButton value="NUDGE" disabled="{!If(tx.taxCreadit.Assigned_Resource__c == null,True,False)}" action="{!updateSendMail}" reRender="dummy" >
+                <apex:param name="attID" value="{!tx.taxCreadit.Id}" assignTo="{!attIdtoSendMail}"/>
+                </apex:commandButton>
+            </apex:column>
+            
+            <apex:column headerValue="Assigned Resource" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:inputField styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+            </apex:column>
+            <apex:column headerValue="Assigned Resource" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:outputText id="assignRes" styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__r.name}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/> 
+            </apex:column>
+            
+            <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:inputField styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+            </apex:column>
+            <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:outputField id="upload" styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+            </apex:column>
+            
+            <apex:column headerValue="Documents Verified" rendered="{!IF(OR($Profile.Name =='System Administrator',$Profile.Name =='Tax Credit'), true, false)}">
+               <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:inputField styleClass="chkVerified" value="{!tx.taxCreadit.Documents_Verified__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+                <apex:commandLink value="View" onclick="OpenVfpage('{!tx.taxCreadit.Id}');"/>
+            </apex:column>
+            <apex:column headerValue="Documents Verified" rendered="{!IF(OR($Profile.Name =='System Administrator',$Profile.Name =='Tax Credit'), false, true)}">
+               <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:outputText >N/A</apex:outputText>&nbsp;
+                <apex:commandLink value="View" onclick="OpenVfpage('{!tx.taxCreadit.Id}');"/>
+            </apex:column>
+            <!--
+            <apex:column headerValue="Aging">
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:outputField value="{!tx.taxCreadit.Agings__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+            </apex:column>
+            
+            <apex:column headerValue="Days Out">
+                <apex:outputText rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),true,false)}">N/A</apex:outputText>
+                <apex:outputField value="{!tx.taxCreadit.Days_Out__c}" rendered="{!IF(OR(contains(tx.taxCreadit.Attachment_Version__c,'2nd YR'),contains(tx.taxCreadit.Attachment_Version__c,'2nd YR Amended'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr'),contains(tx.taxCreadit.Attachment_Version__c,'2nd Yr Amended')),false,true)}"/>
+            </apex:column>
+            --> 
+          </apex:pageBlockTable>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <!--   
+           <label for="pbTb2asdateid" style="color:blue;">Utilization Assigned Date = </label>  <output  type="text" class="pbTb2assigdate" id="pbTb2asdateid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+         -->
+         <!--
+          <apex:inputHidden id="hiddenAssignDate2" value="{!passAssignDate1}"/>  
+          -->
+          <label for="pbTb2dueid" style="color:blue;">% Document Due Date = </label>  <output  type="text" class="pbTb2due" id="pbTb2dueid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenTodoTask2" value="{!passTodoTask2}"/>
+          
+         
+          
+          <label for="pbTb2assigid" style="color:blue;">% Document Assigned Resource = </label> <output type="text" class="pbTb1assig" id="pbTb2assigid" style="color:blue;"></output>
+          <apex:inputHidden id="hiddenassig2" value="{!passAssignRes1}"/>
+          
+          <label for="pbTb2uploadid" style="color:blue;">% Documents Upload = </label>  <output  type="text" class="pbTb2upload" id="pbTb2uploadid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenDocUpload2" value="{!passDocUpload2}"/>
+          
+          <label for="pbTb2verifiedid" style="color:blue;">% Documents Verified = </label>  <output  type="text" class="pbTb2verified" id="pbTb2verifiedid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenDocVerified2" value="{!passDocVerified2}"/>
+          
+          <apex:actionFunction name="passStringToController2" action="{!myMethod2}" rerender="myHiddenField2"/>
+      </div>
+      </apex:pageBlock>
+ 
+ <!------SFX------------>
+ 
+        
+         
+      <apex:pageBlock id="pdBlock2" title="Document Request List" rendered="{!checkCASFX}">
+        
+      
+      <apex:pageblockButtons location="top">
+          <apex:commandButton value="Update" onclick="recSave();return false;" rendered="{!IF(International_Tax_Credit__c.Incentive_Program_Workflow__c != Null,true,false)}"  />
+      </apex:pageblockButtons>
+      <!--<apex:actionFunction name="inscopeCheck" oncomplete="onclickInscope(this.value);" reRender="div2docAssDate"/>-->
+      
+      <div id="dashbordsDiv2">
+      
+            <!-- Due Date -->
+            <table>
+            <th>Document Due Date</th>
+            <th>Assigned Resource</th>
+            <th>Documents Upload </th>
+            <th>Documents Verified</th>
+            <tr>
+            <td>
+           <apex:chart height="100px" width="200px" data="{!pieDataDueDate}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         <td>
+         <!--Assigned Resource-->
+         <apex:chart height="100px" width="200px" data="{!pieDataAssignedResource}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>-->  
+         </apex:chart>
+         
+         </td>
+         <!--Upload -->
+         <td>
+         <apex:chart height="100px" width="200px" data="{!pieDataUpload}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         <!-- Verified --> 
+         <td>
+         <apex:chart height="100px" width="200px" data="{!pieDataVerified}">  
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" /> 
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         </tr>
+         </table>
+      </div>
+      
+      <div id="myDIV2">
+          <apex:pageBlockTable value="{!intenationalTaxWrapperList}" var="tx" styleClass="pbTb3">
+              <apex:column headerValue="International Tax Credit">
+                  <apex:inputField value="{!tx.taxCreadit.International_Tax_Credit__r.Name}"/>
+              </apex:column>
+              <!--
+              <apex:column headerValue="Type" id="type">
+                  <apex:outputlink value="/{!tx.taxCreadit.Id}" target="_blank">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputField value="{!tx.taxCreadit.Attachment_Version__c}"/>
+              </apex:column>
+              -->  
+              
+            <apex:column headerValue="Inscope" >
+                <apex:inputCheckbox styleClass="inscopePROV" onclick="inscopePROVs();" disabled="{!tx.taxCreadit.Documents_Verified__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}">           
+                </apex:inputCheckbox>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+            </apex:column>
+              
+             <apex:column headerValue="Document Types">  
+                  <apex:outputlink value="/apex/InternationalTaxCreditAttachment1?id={!tx.taxCreadit.Id}" target="_blank" rendered="{!AND(tx.taxCreadit.Recap_Report__c=null,tx.taxCreadit.Documents_Verified__c=false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputlink value="{!IF(BEGINS(LOWER(tx.taxCreadit.Recap_Report__c), 'http'), tx.taxCreadit.Recap_Report__c, 'http://'+tx.taxCreadit.Recap_Report__c)}" target="_blank" rendered="{!AND(tx.taxCreadit.Attachment_Version__c='Recap Report',tx.taxCreadit.Recap_Report__c!=null)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputText rendered="{!If(tx.taxCreadit.Documents_Verified__c == true, true, false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputText> 
+            </apex:column>
+         <!--   
+            <apex:column headerValue="Document Assigned Date">
+                <apex:inputField styleClass="chkAssigDate" id="div2docAssDate" value="{!tx.taxCreadit.Documents_Assigned_Date__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}" />
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+
+            </apex:column>
+           --> 
+            <apex:column headerValue="Document Due Date" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:inputField styleClass="chkDueDate" value="{!tx.taxCreadit.Doc_Due_Date__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+           </apex:column>
+           <apex:column headerValue="Document Due Date" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:Outputtext id="dueDate" styleClass="chkDueDate" value="{0,date,MM/dd/yyyy}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"><apex:param value="{!tx.taxCreadit.Doc_Due_Date__c}" /></apex:outputText>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+           </apex:column>
+           
+            <apex:column headerValue="NUDGE">
+                <apex:commandButton value="NUDGE" disabled="{!If(tx.taxCreadit.Assigned_Resource__c == null,True,False)}" action="{!updateSendMail}" reRender="dummy" >
+                <apex:param name="attID" value="{!tx.taxCreadit.Id}" assignTo="{!attIdtoSendMail}"/>
+                </apex:commandButton>
+            </apex:column>
+                        
+            <apex:column headerValue="Assigned Resource" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:inputField styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+            </apex:column>
+            <apex:column headerValue="Assigned Resource" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:outputText id="assignRes" styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__r.name}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+            </apex:column>
+            
+            <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:inputField styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+           </apex:column>
+           <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:outputField id="upload" styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+           </apex:column>
+            
+            <apex:column headerValue="Documents Verified">
+                <apex:inputField styleClass="chkVerified" value="{!tx.taxCreadit.Documents_Verified__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+                <apex:commandLink value="View" onclick="OpenVfpage('{!tx.taxCreadit.Id}');"/>
+                <!--<apex:outputLink value="/apex/AttachmentView?id={!tx.taxCreadit.Id}" target="_blank">View</apex:outputLink>-->
+            </apex:column>
+            <!--
+            <apex:column headerValue="Aging">
+                <apex:outputField value="{!tx.taxCreadit.Agings__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+
+            </apex:column>
+            
+            <apex:column headerValue="Days Out">
+                <apex:outputField value="{!tx.taxCreadit.Days_Out__c}" rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),false,true)}"/>
+                <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText>
+
+            </apex:column>  
+            -->  
+          </apex:pageBlockTable>
+          
+        <!--  
+          <label for="pbTb3asdateid" style="color:blue;">Utilization Assigned Date = </label>  <output  type="text" class="pbTb3assigdate" id="pbTb3asdateid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          -->
+          <!--
+          <apex:inputHidden id="hiddenAssignDate3" value="{!passAssignDate2}"/>
+          -->
+           <!--<input type="text" value="{!International_Tax_Credit__c.Utilization_Doc_Due_Date__c}" id="pbTb3dueid" class="pbTb3due"/>-->
+          <label for="pbTb3assigid" style="color:blue;">% Document Due Date = </label>  <output type="text" class="pbTb3due" id="pbTb3dueid" style="color:blue;"></output>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           <label for="pbTb3assigid" style="color:blue;">% Document Assigned Resource = </label>  <output type="text" class="pbTb3assig" id="pbTb3assigid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           
+          
+          
+          <apex:inputHidden id="hiddenTodoTask" value="{!passTodoTask}"/>
+          <apex:inputHidden id="hiddenassig3" value="{!passAssignRes2}"/> 
+          
+          <label for="pbTb3uploadid" style="color:blue;"> % Documents Upload = </label>  <output  type="text" class="pbTb3upload" id="pbTb3uploadid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+          <apex:inputHidden id="hiddenDocUpload3" value="{!passDocUpload3}"/>
+          
+          <label for="pbTb3verifiedid" style="color:blue;"> % Documents Verified = </label>  <output  type="text" class="pbTb3verified" id="pbTb3verifiedid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenDocVerified3" value="{!passDocVerified3}"/>
+          
+          <apex:actionFunction name="passStringToController" action="{!myMethod}" rerender="hiddenTodoTask"/>
+          <!--
+          <script>
+            function stingvals(vs){
+              $( "#hiddenTodoTask" ).val( vs);
+            }
+          </script>
+          -->
+      </div>
+      </apex:pageBlock>
+
+      <!-----------------------------------------------Canada WF--------------------------------->
+
+<apex:pageBlock id="pdBlock3" title="Document Request List" rendered="{!checkCANADAWF}">
+        
+      
+      <apex:pageblockButtons location="top">
+          <apex:commandButton value="Update" onclick="recSave();return false;" rendered="{!IF(International_Tax_Credit__c.Incentive_Program_Workflow__c != Null,true,false)}"  />
+      </apex:pageblockButtons>
+      
+      <div id="dashbordsDiv3">
+      
+            <!-- Due Date -->
+            <table>
+            <th>Document Due Date</th>
+            <th>Assigned Resource</th>
+            <th>Documents Upload </th>
+            <th>Documents Verified</th>
+            <tr>
+            <td>
+           <apex:chart height="60px" width="100px" data="{!pieDataDueDate}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>-->
+         </apex:chart>
+         </td>
+         <td>
+         <!--Assigned Resource-->
+         <apex:chart height="60px" width="100px" data="{!pieDataAssignedResource}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         
+         </td>
+         <!--Upload -->
+         <td>
+         <apex:chart height="60px" width="100px" data="{!pieDataUpload}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>-->
+         </apex:chart>
+         </td>
+         <!-- Verified --> 
+         <td>
+         <apex:chart height="60px" width="100px" data="{!pieDataVerified}">    
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" /> 
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         </tr>
+         </table>
+      </div>
+      
+      <div id="myDIV3">
+          <apex:pageBlockTable value="{!intenationalTaxWrapperList}" var="tx" styleClass="pbTb4">
+              <apex:column headerValue="International Tax Credit">
+                  <apex:inputField value="{!tx.taxCreadit.International_Tax_Credit__r.Name}"/>
+              </apex:column>
+              
+            <apex:column headerValue="Inscope" >
+               <apex:inputField styleClass="chkinscope" value="{!tx.taxCreadit.Inscope__c}" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}" />
+               <apex:outputField id="inscope" value="{!tx.taxCreadit.Inscope__c}" styleClass="chkinscope" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}"/>
+                <!-- <apex:inputCheckbox styleClass="inscopePROV" onclick="inscopePROVs();" disabled="{!tx.taxCreadit.Documents_Verified__c}" >           
+                </apex:inputCheckbox> -->
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText>-->
+            </apex:column>
+              
+            <apex:column headerValue="Document Types">  
+                  <apex:outputlink value="/apex/InternationalTaxCreditAttachment1?id={!tx.taxCreadit.Id}" target="_blank" rendered="{!AND(tx.taxCreadit.Recap_Report__c=null,tx.taxCreadit.Documents_Verified__c=false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputlink value="{!IF(BEGINS(LOWER(tx.taxCreadit.Recap_Report__c), 'http'), tx.taxCreadit.Recap_Report__c, 'http://'+tx.taxCreadit.Recap_Report__c)}" target="_blank" rendered="{!AND(tx.taxCreadit.Attachment_Version__c='Recap Report',tx.taxCreadit.Recap_Report__c!=null)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputText rendered="{!If(tx.taxCreadit.Documents_Verified__c == true, true, false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputText> 
+            </apex:column>
+              
+            <apex:column headerValue="Document Due Date" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), false, true)}">
+                <apex:inputField styleClass="chkDueDate" value="{!tx.taxCreadit.Doc_Due_Date__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText> -->
+           </apex:column>
+           <apex:column headerValue="Document Due Date" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), true, false)}">
+                <apex:Outputtext id="dueDate" styleClass="chkDueDate" value="{0,date,MM/dd/yyyy}" ><apex:param value="{!tx.taxCreadit.Doc_Due_Date__c}" /></apex:outputText> 
+                <apex:inputfield value="{!tx.taxCreadit.Doc_Due_Date__c}" html-disabled="true" rendered="{!IF(tx.taxCreadit.Doc_Due_Date__c== Null , true,false)}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText> --> 
+           </apex:column> 
+           
+            <apex:column headerValue="NUDGE">
+                <apex:commandButton value="{!If(tx.taxCreadit.Assigned_Resource__c == null,'Submit','Nudge')}" oncomplete="recSave();return false;"  action="{!updateSendMail}" reRender="dummy" >
+                <apex:param name="attID" value="{!tx.taxCreadit.Id}" assignTo="{!attIdtoSendMail}"/>
+                </apex:commandButton>
+            </apex:column>
+                        
+            <apex:column headerValue="Assigned Resource" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), false, true)}">
+                <apex:inputField styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText> -->
+            </apex:column>
+            <apex:column headerValue="Assigned Resource" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), true, false)}">
+                <apex:outputText id="assignRes" styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__r.name}" />
+                <apex:inputfield value="{!tx.taxCreadit.Assigned_Resource__c}" html-disabled="true" rendered="{!IF(tx.taxCreadit.Assigned_Resource__c== Null , true,false)}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText> -->
+            </apex:column> 
+            
+            <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:inputField styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" />
+               <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText> --> 
+           </apex:column> 
+           <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:outputField id="upload" styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR',tx.taxCreadit.Attachment_Version__c = 'Final Application 2nd YR Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Disallowance Letter 2nd Yr Amended', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr', tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Treasury Communications 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 1st Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr',tx.taxCreadit.Attachment_Version__c = 'Amended Tax Return 2nd Yr Amended',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr'),true,false)}">N/A</apex:outputText> -->
+           </apex:column>
+            
+            <apex:column headerValue="Documents Verified">
+                <apex:inputField styleClass="chkVerified" value="{!tx.taxCreadit.Documents_Verified__c}" />
+               <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText> -->
+                <apex:commandLink value="View" onclick="OpenVfpage('{!tx.taxCreadit.Id}');"/>
+                <!--<apex:outputLink value="/apex/AttachmentView?id={!tx.taxCreadit.Id}" target="_blank">View</apex:outputLink>-->
+            </apex:column> 
+           
+          </apex:pageBlockTable>
+       
+          <label for="pbTb4assigid" style="color:blue;">% Document Due Date = </label>  <output type="text" class="pbTb4due" id="pbTb4dueid" style="color:blue;"></output>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           <label for="pbTb4assigid" style="color:blue;">% Document Assigned Resource = </label>  <output type="text" class="pbTb4assig" id="pbTb4assigid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           
+          
+          
+          <apex:inputHidden id="hiddenTodoTask" value="{!passTodoTask6}"/>
+          <apex:inputHidden id="hiddenassig3" value="{!passAssignRes6}"/> 
+          
+          <label for="pbTb4uploadid" style="color:blue;"> % Documents Upload = </label>  <output  type="text" class="pbTb4upload" id="pbTb4uploadid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+          <apex:inputHidden id="hiddenDocUpload3" value="{!passDocUpload6}"/>
+          
+          <label for="pbTb4verifiedid" style="color:blue;"> % Documents Verified = </label>  <output  type="text" class="pbTb4verified" id="pbTb4verifiedid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenDocVerified3" value="{!passDocVerified6}"/>
+          
+          <apex:actionFunction name="passStringToController" action="{!myMethod}" rerender="hiddenTodoTask"/>         
+      </div>
+      </apex:pageBlock> 
+
+<!-------------------------------------------- END --------------------------------------------------------->
+
+      <!-----------------------------------------------New York WF--------------------------------->
+
+<apex:pageBlock id="pdBlock4" title="Document Request List" rendered="{!checkNEWYORKWF}">
+        
+      
+      <apex:pageblockButtons location="top">
+          <apex:commandButton value="Update" onclick="recSave();return false;" rendered="{!IF(International_Tax_Credit__c.Incentive_Program_Workflow__c != Null,true,false)}"  />
+      </apex:pageblockButtons>
+      
+      <div id="dashbordsDiv3">
+      
+            <!-- Due Date -->
+            <table>
+            <th>Document Due Date</th>
+            <th>Assigned Resource</th>
+            <th>Documents Upload </th>
+            <th>Documents Verified</th>
+            <tr>
+            <td>
+           <apex:chart height="60px" width="100px" data="{!pieDataDueDate}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>-->  
+         </apex:chart>
+         </td>
+         <td>
+         <!--Assigned Resource-->
+         <apex:chart height="60px" width="100px" data="{!pieDataAssignedResource}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+              <!-- <apex:legend position="right"/> --> 
+         </apex:chart>
+         
+         </td>
+         <!--Upload -->
+         <td>
+         <apex:chart height="60px" width="100px" data="{!pieDataUpload}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!-- <apex:legend position="right"/>-->  
+         </apex:chart>
+         </td>
+         <!-- Verified --> 
+         <td>
+         <apex:chart height="60px" width="100px" data="{!pieDataVerified}">  
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" /> 
+               <!-- <apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         </tr>
+         </table>
+      </div>
+      
+      <div id="myDIV3">
+          <apex:pageBlockTable value="{!intenationalTaxWrapperList}" var="tx" styleClass="pbTb5">
+              <apex:column headerValue="International Tax Credit">
+                  <apex:inputField value="{!tx.taxCreadit.International_Tax_Credit__r.Name}"/>
+              </apex:column>
+              
+             <apex:column headerValue="Inscope" >
+               <apex:inputField styleClass="chkinscope" value="{!tx.taxCreadit.Inscope__c}" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}" />
+               <apex:outputField id="inscope" value="{!tx.taxCreadit.Inscope__c}" styleClass="chkinscope" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}"/>
+                <!-- <apex:inputCheckbox styleClass="inscopePROV" onclick="inscopePROVs();" disabled="{!tx.taxCreadit.Documents_Verified__c}" >           
+                </apex:inputCheckbox> -->
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText>-->
+            </apex:column>
+              
+            <apex:column headerValue="Document Types">  
+                  <apex:outputlink value="/apex/InternationalTaxCreditAttachment1?id={!tx.taxCreadit.Id}" target="_blank" rendered="{!AND(tx.taxCreadit.Recap_Report__c=null,tx.taxCreadit.Documents_Verified__c=false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputlink value="{!IF(BEGINS(LOWER(tx.taxCreadit.Recap_Report__c), 'http'), tx.taxCreadit.Recap_Report__c, 'http://'+tx.taxCreadit.Recap_Report__c)}" target="_blank" rendered="{!AND(tx.taxCreadit.Attachment_Version__c='Recap Report',tx.taxCreadit.Recap_Report__c!=null)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputText rendered="{!If(tx.taxCreadit.Documents_Verified__c == true, true, false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputText> 
+            </apex:column>
+       
+            <apex:column headerValue="Document Due Date" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), false, true)}">
+                <apex:inputField styleClass="chkDueDate" value="{!tx.taxCreadit.Doc_Due_Date__c}" /> <!-- rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),true,false)}"/> --> 
+               <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),false,true)}">N/A</apex:outputText>--> 
+           </apex:column>
+           <apex:column headerValue="Document Due Date" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), true, false)}">
+                <apex:Outputtext id="dueDate" styleClass="chkDueDate" value="{0,date,MM/dd/yyyy}" ><apex:param value="{!tx.taxCreadit.Doc_Due_Date__c}" /></apex:outputText> <!-- rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),true,false)}"><apex:param value="{!tx.taxCreadit.Doc_Due_Date__c}" -->
+                <apex:inputfield value="{!tx.taxCreadit.Doc_Due_Date__c}" html-disabled="true" rendered="{!IF(tx.taxCreadit.Doc_Due_Date__c== Null , true,false)}" />
+                <!--<apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),false,true)}">N/A</apex:outputText> -->
+           </apex:column>
+           
+            <apex:column headerValue="NUDGE">
+                <apex:commandButton value="{!If(tx.taxCreadit.Assigned_Resource__c == null,'Submit','Nudge')}" oncomplete="recSave();return false;"  action="{!updateSendMail}" reRender="dummy" >
+                <apex:param name="attID" value="{!tx.taxCreadit.Id}" assignTo="{!attIdtoSendMail}"/>
+                </apex:commandButton>
+            </apex:column>
+                        
+            <apex:column headerValue="Assigned Resource" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), false, true)}">
+                <apex:inputField styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__c}" /> <!-- rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),true,false)}" -->
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),false,true)}">N/A</apex:outputText> --> 
+            </apex:column>
+            <apex:column headerValue="Assigned Resource" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), true, false)}">
+                <apex:outputText id="assignRes" styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__r.name}" /> <!-- rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),true,false)}" -->
+                <apex:inputfield value="{!tx.taxCreadit.Assigned_Resource__c}" html-disabled="true" rendered="{!IF(tx.taxCreadit.Assigned_Resource__c== Null , true,false)}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),false,true)}">N/A</apex:outputText> --> 
+            </apex:column>
+            
+            <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:inputField styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),false,true)}">N/A</apex:outputText> -->
+           </apex:column>
+           <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:outputField id="upload" styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),false,true)}">N/A</apex:outputText> --> 
+           </apex:column>
+            
+            <apex:column headerValue="Documents Verified">
+                <apex:inputField styleClass="chkVerified" value="{!tx.taxCreadit.Documents_Verified__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Certificate'),false,true)}">N/A</apex:outputText> -->
+                <apex:commandLink value="View" onclick="OpenVfpage('{!tx.taxCreadit.Id}');"/>
+                <!--<apex:outputLink value="/apex/AttachmentView?id={!tx.taxCreadit.Id}" target="_blank">View</apex:outputLink>-->
+            </apex:column>
+           
+          </apex:pageBlockTable>
+       
+          <label for="pbTb4assigid" style="color:blue;">% Document Due Date = </label>  <output type="text" class="pbTb4due" id="pbTb5dueid" style="color:blue;"></output>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           <label for="pbTb4assigid" style="color:blue;">% Document Assigned Resource = </label>  <output type="text" class="pbTb4assig" id="pbTb5assigid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           
+          
+          
+          <apex:inputHidden id="hiddenTodoTask" value="{!passTodoTask4}"/>
+          <apex:inputHidden id="hiddenassig3" value="{!passAssignRes4}"/> 
+          
+          <label for="pbTb4uploadid" style="color:blue;"> % Documents Upload = </label>  <output  type="text" class="pbTb4upload" id="pbTb5uploadid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+          <apex:inputHidden id="hiddenDocUpload3" value="{!passDocUpload4}"/>
+          
+          <label for="pbTb4verifiedid" style="color:blue;"> % Documents Verified = </label>  <output  type="text" class="pbTb4verified" id="pbTb5verifiedid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenDocVerified3" value="{!passDocVerified4}"/>
+          
+          <apex:actionFunction name="passStringToController" action="{!myMethod}" rerender="hiddenTodoTask"/>         
+      </div>
+      </apex:pageBlock>
+
+<!-------------------------------------------- END --------------------------------------------------------->
+
+      <!-----------------------------------------------Illinois WF--------------------------------->
+
+<apex:pageBlock id="pdBlock5" title="Document Request List" rendered="{!checkILLINOISWF}">
+        
+      
+      <apex:pageblockButtons location="top">
+          <apex:commandButton value="Update" onclick="recSave();return false;" rendered="{!IF(International_Tax_Credit__c.Incentive_Program_Workflow__c != Null,true,false)}"  />
+      </apex:pageblockButtons>
+      
+      <div id="dashbordsDiv3">
+      
+            <!-- Due Date -->
+            <table>
+            <th>Document Due Date</th>
+            <th>Assigned Resource</th>
+            <th>Documents Upload </th>
+            <th>Documents Verified</th>
+            <tr>
+            <td>
+           <apex:chart height="60px" width="100px" data="{!pieDataDueDate}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         <td>
+         <!--Assigned Resource-->
+         <apex:chart height="60px" width="100px" data="{!pieDataAssignedResource}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         
+         </td>
+         <!--Upload -->
+         <td>
+         <apex:chart height="60px" width="100px" data="{!pieDataUpload}">
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" />
+                <!--<apex:legend position="right"/>-->  
+         </apex:chart>
+         </td>
+         <!-- Verified --> 
+         <td>
+         <apex:chart height="60px" width="100px" data="{!pieDataVerified}">  
+                <apex:pieSeries dataField="percentageCount" labelField="dateType" donut="50" colorSet="#6cd35d,#d3351d" /> 
+                <!--<apex:legend position="right"/>--> 
+         </apex:chart>
+         </td>
+         </tr>
+         </table>
+      </div>
+      
+      <div id="myDIV3">
+          <apex:pageBlockTable value="{!intenationalTaxWrapperList}" var="tx" styleClass="pbTb6">
+              <apex:column headerValue="International Tax Credit">
+                  <apex:inputField value="{!tx.taxCreadit.International_Tax_Credit__r.Name}"/>
+              </apex:column>
+              
+            <apex:column headerValue="Inscope" >
+               <apex:inputField styleClass="chkinscope" value="{!tx.taxCreadit.Inscope__c}" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}" />
+               <apex:outputField id="inscope" value="{!tx.taxCreadit.Inscope__c}" styleClass="chkinscope" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}"/>
+                <!-- <apex:inputCheckbox styleClass="inscopePROV" onclick="inscopePROVs();" disabled="{!tx.taxCreadit.Documents_Verified__c}" >           
+                </apex:inputCheckbox> -->
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter'),false,true)}">N/A</apex:outputText>-->
+            </apex:column>
+              
+            <apex:column headerValue="Document Types">  
+                  <apex:outputlink value="/apex/InternationalTaxCreditAttachment1?id={!tx.taxCreadit.Id}" target="_blank" rendered="{!AND(tx.taxCreadit.Recap_Report__c=null,tx.taxCreadit.Documents_Verified__c=false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputlink value="{!IF(BEGINS(LOWER(tx.taxCreadit.Recap_Report__c), 'http'), tx.taxCreadit.Recap_Report__c, 'http://'+tx.taxCreadit.Recap_Report__c)}" target="_blank" rendered="{!AND(tx.taxCreadit.Attachment_Version__c='Recap Report',tx.taxCreadit.Recap_Report__c!=null)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputlink>
+                  <apex:outputText rendered="{!If(tx.taxCreadit.Documents_Verified__c == true, true, false)}">{!tx.taxCreadit.Attachment_Version__c}</apex:outputText> 
+            </apex:column>
+       
+            <apex:column headerValue="Document Due Date" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), false, true)}">
+                <apex:inputField styleClass="chkDueDate" value="{!tx.taxCreadit.Doc_Due_Date__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),false,true)}">N/A</apex:outputText> --> 
+           </apex:column>
+           <apex:column headerValue="Document Due Date" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), true, false)}">
+                <apex:Outputtext id="dueDate" styleClass="chkDueDate" value="{0,date,MM/dd/yyyy}" ><apex:param value="{!tx.taxCreadit.Doc_Due_Date__c}" /></apex:outputText>
+                <apex:inputfield value="{!tx.taxCreadit.Doc_Due_Date__c}" html-disabled="true" rendered="{!IF(tx.taxCreadit.Doc_Due_Date__c== Null , true,false)}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),false,true)}">N/A</apex:outputText> -->
+           </apex:column>
+           
+            <apex:column headerValue="NUDGE">
+                <apex:commandButton value="{!If(tx.taxCreadit.Assigned_Resource__c == null,'Submit','Nudge')}" oncomplete="recSave();return false;" action="{!updateSendMail}" reRender="dummy" >
+                <apex:param name="attID" value="{!tx.taxCreadit.Id}" assignTo="{!attIdtoSendMail}"/>
+                </apex:commandButton>
+            </apex:column>
+                        
+            <apex:column headerValue="Assigned Resource" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), false, true)}">
+                <apex:inputField styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__c}" /> 
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),false,true)}">N/A</apex:outputText> -->
+            </apex:column>
+            <apex:column headerValue="Assigned Resource" rendered="{!IF((tx.taxCreadit.Documents_Verified__c == true||tx.taxCreadit.Inscope__c==false), true, false)}">
+                <apex:outputText id="assignRes" styleClass="chkAssignRes" value="{!tx.taxCreadit.Assigned_Resource__r.name}" />
+                <apex:inputfield value="{!tx.taxCreadit.Assigned_Resource__c}" html-disabled="true" rendered="{!IF(tx.taxCreadit.Assigned_Resource__c== Null , true,false)}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),false,true)}">N/A</apex:outputText> -->
+            </apex:column>
+            
+            <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, false, true)}">
+                <apex:inputField styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" />
+                <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),false,true)}">N/A</apex:outputText> -->
+           </apex:column>
+           <apex:column headerValue="Documents Upload" rendered="{!IF(tx.taxCreadit.Documents_Verified__c == true, true, false)}">
+                <apex:outputField id="upload" styleClass="chkUpload" value="{!tx.taxCreadit.Documents_Upload__c}" /> <!-- rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),true,false)}"-->
+               <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),false,true)}">N/A</apex:outputText> -->
+           </apex:column>
+            
+            <apex:column headerValue="Documents Verified">
+                <apex:inputField styleClass="chkVerified" value="{!tx.taxCreadit.Documents_Verified__c}" />
+               <!-- <apex:outputText rendered="{!IF(OR(tx.taxCreadit.Attachment_Version__c = 'Initial Application',tx.taxCreadit.Attachment_Version__c = 'Budget Top Sheet',tx.taxCreadit.Attachment_Version__c = 'Audit Firm Engagement Letter',tx.taxCreadit.Attachment_Version__c = 'Final Application 1st Yr Amended'),false,true)}">N/A</apex:outputText> -->
+                <apex:commandLink value="View" onclick="OpenVfpage('{!tx.taxCreadit.Id}');"/>
+                <!--<apex:outputLink value="/apex/AttachmentView?id={!tx.taxCreadit.Id}" target="_blank">View</apex:outputLink>-->
+            </apex:column>
+           
+          </apex:pageBlockTable>
+       
+          <label for="pbTb4assigid" style="color:blue;">% Document Due Date = </label>  <output type="text" class="pbTb4due" id="pbTb6dueid" style="color:blue;"></output>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           <label for="pbTb4assigid" style="color:blue;">% Document Assigned Resource = </label>  <output type="text" class="pbTb4assig" id="pbTb6assigid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+           
+          
+          
+          <apex:inputHidden id="hiddenTodoTask" value="{!passTodoTask5}"/>
+          <apex:inputHidden id="hiddenassig3" value="{!passAssignRes5}"/> 
+          
+          <label for="pbTb4uploadid" style="color:blue;"> % Documents Upload = </label>  <output  type="text" class="pbTb4upload" id="pbTb6uploadid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+          <apex:inputHidden id="hiddenDocUpload3" value="{!passDocUpload5}"/>
+          
+          <label for="pbTb4verifiedid" style="color:blue;"> % Documents Verified = </label>  <output  type="text" class="pbTb4verified" id="pbTb6verifiedid" style="color:blue;"></output >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <apex:inputHidden id="hiddenDocVerified3" value="{!passDocVerified5}"/>
+          
+          <apex:actionFunction name="passStringToController" action="{!myMethod}" rerender="hiddenTodoTask"/>         
+      </div>
+      </apex:pageBlock> 
+
+<!-------------------------------------------- END --------------------------------------------------------->
+ 
+      <apex:pageBlock id="pdBlock6" title="Document Request List" rendered="{!IF(International_Tax_Credit__c.Incentive_Program_Workflow__c == Null,true,false)}">
+   
+      <div id="myDIV4">
+          <p1 id="p1nullValue"> Incentive Program Workflow Is Null So Please Select The Value To Get The Document Request List  </p1>
+      </div>
+
+     </apex:pageBlock>
+  </apex:form>
+  <!--</div>-->
+</apex:page>

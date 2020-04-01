@@ -1,0 +1,182 @@
+https://jira.inbcu.com/browse/COES-513
+TVPFF: International Tax - add document upload timestamp to document attachment section to highlight most recent version
+https://jira.inbcu.com/browse/COES-501
+TVPFF: International Tax - single-click ADMIN accept/reject on doc validation
+https://jira.inbcu.com/browse/COES-502
+TVPFF: International Tax - single-click RESOURCE accept/reject on doc upload
+https://jira.inbcu.com/browse/COES-499
+TVPFF: International Tax - Document request to resource should LINK to specific document for upload
+https://jira.inbcu.com/browse/COES-2920
+International Tax attachment - adding BACK button to return to Tax credit
+https://jira.inbcu.com/browse/COES-2922
+International TAX - adding Pacing Date in format mm/dd/yyyy for each time slice
+
+************************************************************************************************************************************************
+https://jira.inbcu.com/browse/COES-513
+[includes SCREENSHOT]
+
+SUMMARY - The business would like to see the most current document timestamp of a DRL line item for a TAX CREDIT.
+
+USER STORY
+
+As an APPLICATION ADMIN, they would like the capability to view the document upload timestamp for all documents on a specific Tax Credit application.
+
+Documents are attached via DRL functionality.
+
+The document upload timestamp should be tracked at the document(VERSION) level on a tax credit.
+
+A tax credit can have multiple documents attached to it.
+
+An document can only have one document upload timestamp (the time the document is uploaded).
+
+This document upload timestamp should be displayed on the International Tax Credit Attachment section of the page layout (see screenshot)
+
+The document upload timestamp can be placed either
+
+between attachment name and order (option 1) OR
+or after version (option 2)
+Also, can you HIDE the DEL option for every document in the attachment list?
+
+ACCEPTANCE CRITERIA
+
+Most current timestamp of a document upload is displayed on the tax credit screen.
+
+BUSINESS BENEFIT
+
+Ease of business to identify how current a document upload is.
+
+
+************************************************************************************************************************************************
+https://jira.inbcu.com/browse/COES-501
+
+The application admin would like the capability to single click accept/reject logic when validating documents on the document request list (DRL).
+
+When the application admin clicks VIEW for that specific DRL line item, they would like a browser to open with the document displayed and 2 options available.
+
+clicking ACCEPT should update the document verified flag for the line item and close out the document in the browser.
+
+clicking REJECT should delete the attachment, notify the resource that the document was rejected and needs to be re-uploaded, and close out the document in the browser.
+
+
+
+************************************************************************************************************************************************
+https://jira.inbcu.com/browse/COES-502
+
+SUMMARY
+
+The application admin would like the resource to have the capability to single click accept/reject logic after uploading  documents on the document request list (DRL).
+
+When the resource uploads a document for a  specific DRL line item, they would like a browser to open with the document displayed and 2 options available.
+
+clicking ACCEPT should update the document upload flag for the line item and close out the document in the browser.
+
+clicking REJECT should delete the attachment, return to the document upload page, and close out the rejected document viewed in the browser.
+
+USER STORY
+
+As a resource, I'd like the capability to single click an approval or rejection after I upload a document.
+
+After the doc is uploaded to a DRL line item, the document should open in a window and I'd like to see 2 buttons available for CLICK.
+
+Clicking ACCEPT would confirm that the proper document was uploaded to the tax credit application and a notification to the application admin should be sent (already present in logic)
+
+Clicking REJECT should delete the document and the DRL item upload page should be available to re-upload a document.  The subsequent upload should still display the document and provide ACCEPT/REJECT on the re-uploaded doc.
+
+ACCEPTANCE CRITERIA
+
+On upload of doc by resource
+
+RESOURCE sees display of uploaded doc in window with 2 action buttons.  ACCEPT (green) or REJECT(red).
+If the RESOURCE clicks ACCEPT, notification up upload should be sent to application admin for verification (already present in logic)
+If the RESOURCE clicks REJECT, doc should be deleted, reset of DRL upload
+BUSINESS BENEFIT
+
+Gives RESORUCE clean ACCEPT/REJECT functionality for handoff to application admin for doc validation.
+
+
+************************************************************************************************************************************************
+https://jira.inbcu.com/browse/COES-499
+
+The application admin can assign document requests to a resource and assign a due date from the Document Request List (DRL) section of the International Tax Credit main page.
+
+An email goes out to the assigned resource notifying them of the assignment and due date.
+
+A hyperlink to the specific tax credit is provided in the email.
+
+When the link is clicked, it returns the tax credit main page and the resource needs to select what document to upload.  This is a possible failure point where a resource may select and incorrectly upload a document to an incorrect line item on the DRL.
+
+The business would like the capability where the hyperlink in the email notification only allows uploads to that assigned document type for that resource for that tax credit.
+
+The business would like to limit the possible failure point of a resource incorrectly picking a document type for upload.
+
+Question:  Is there a way to limit the possible version(document types) to only those that were assigned to that resource on that tax credit?
+
+ 
+ ACCEPTANCE CRITERIA:
+ 
+ when clicking the tax credit URL in the email notification, the document upload page should only allow that resource to only upload that specific doc type. They should not be allowed to pick what doc type to upload.
+ 
+ STEPS TO REPRODUCE:
+ 
+ Pick an International Tax Credit from dev and assign yourself as a resource and due date.
+
+https://tvp--dev.cs10.my.salesforce.com/a0WJ0000005AW4z
+
+when you receive the email, click the hyperlink and select a document type that is different from the doc type listed in the email.
+
+Currently, you can pick any doc type in the list.
+
+ 
+ 
+ 
+ 
+ 
+************************************************************************************************************************************************
+https://jira.inbcu.com/browse/COES-2920
+
+
+SUMMARY
+
+When a user wants to update a tax credit with an attachment insert/update, the tax credit attachment page opens a no BACK button is available to return the user to the tax credit.
+
+The user would like a BACK button added that return them to the previous tax credit.
+
+USER STORY
+
+As a user, when I insert/update a tax credit attachment from the tax credit screen, I'd like a BACK button available that returns me back to the previous tax credit.
+
+ACCEPTANCE CRITERIA
+
+When I insert/update a tax credit attachment from the tax credit screen, I'd like a BACK button available that returns me back to the previous tax credit.
+
+BUSINESS BENEFIT
+
+Increases ease of use of Tax Credit application.
+
+
+************************************************************************************************************************************************
+https://jira.inbcu.com/browse/COES-2922
+
+
+
+SUMMARY
+
+The business would like to add a PACING date ('MM/DD/YYYY') for each time slice on both the 1st and 2nd page layouts for International Tax.  We can default that date to NULLS upon creation.
+
+USER STORY
+
+As a user, I'd like to track PACING dates for each of the time slices for a TAX CREDIT application.
+
+The date should be in 'MM/DD/YYYY' format. 
+
+A date picker should be available for each of the fields.
+
+ACCEPTANCE CRITERIA
+
+If a date is selected for a time slice, that value is available post-update.  Updates to this field should be allowed.
+
+This field should also be available via Informatica for any DW reporting.
+
+BUSINESS BENEFIT
+
+Allows business to assign pacing date for each time slice for SAP data inclusion for snapshot reporting.

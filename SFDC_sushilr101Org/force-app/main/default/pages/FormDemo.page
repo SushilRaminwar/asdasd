@@ -1,0 +1,28 @@
+<apex:page standardController="account">
+
+<apex:form >
+
+
+<apex:outputLabel value="Name" />
+<apex:inputField value="{!account.name}"/>
+<apex:outputLabel value="Type"/>
+<br/>
+
+<apex:selectRadio >
+<apex:selectOption value="{!account.type}">Customer </apex:selectOption>
+<apex:selectOption value="{!account.type}">Partner</apex:selectOption>
+
+</apex:selectRadio>
+<br/><br/>
+<apex:selectCheckboxes >
+<apex:selectOptions value="{!account.contacts}">asd</apex:selectOptions>
+<apex:selectOptions value="{!account.contacts}">asd</apex:selectOptions>
+
+</apex:selectCheckboxes>
+
+
+<apex:commandButton action="{!save}" value="Insert"/>
+
+</apex:form>
+ 
+</apex:page>

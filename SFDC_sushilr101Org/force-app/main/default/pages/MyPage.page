@@ -1,0 +1,14 @@
+<apex:page standardController="case"  >
+ <apex:form >
+ <apex:outputLabel value="Status" /> <apex:inputField value="{!case.Status}"/><br/><br/>
+ Owner
+ <apex:outputLabel value="Owner" /> <apex:inputField value="{!case.Owner.Name}"/><br/><br/>
+ 
+ 
+ <apex:outputLabel value="Contact Phone" /> <apex:inputField value="{!case.Contact.Phone}"/><br/><br/> 
+ 
+  <apex:outputLabel value="Account" /> <apex:inputField value="{!case.Account.Name}"/><br/><br/>
+  
+  <apex:commandButton action="{!save}" value="Submit"/>
+  </apex:form>
+</apex:page>

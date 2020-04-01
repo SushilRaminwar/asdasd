@@ -1,0 +1,22 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId" access="global">
+
+    <aura:attribute name="hideShow" type="String" default="hide"/>
+    
+    <div>
+    <ui:inputText aura:id="name" label="Enter Name:" placeholder="Your Name" />
+	<ui:button aura:id="button" buttonTitle="Click to see what you put into the field" class="button" label="Click me" press="{!c.getInput}"/>
+	<ui:outputText aura:id="outName" value="" class="text"/>
+
+    <!--ui:button label="test" class="button" press="{!c.doAction}" aura:id="myButton"/-->
+
+    
+     <lightning:button onclick="{!c.applyCSS}" label="Add Style" />
+    <lightning:button onclick="{!c.removeCSS}" label="Remove Style" />
+    
+</div>
+    
+    <div class="{! 'slds-' + v.hideShow  }">
+     <ui:button label="QWEQWE" class="button" press="{!c.doAction}" aura:id="myButton"/>
+    </div>
+    
+    </aura:component>

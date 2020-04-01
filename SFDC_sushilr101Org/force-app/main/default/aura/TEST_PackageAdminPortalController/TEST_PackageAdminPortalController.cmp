@@ -1,0 +1,79 @@
+<aura:component  implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >
+    <aura:attribute name="Reporturl" type="Map" />
+   	
+    <div class="slds slds-p-bottom--xxx-small">
+        <lightning:card>
+            
+                <div class="slds-section slds-is-open slds-text-heading_medium"> 
+                     &nbsp;<lightning:icon iconName="standard:user" size="small" />
+                    <span class="slds-truncate"><b>  TV Packaging Analytics - Admin Portal</b></span>
+                </div>
+                
+            <lightning:tabset variant="scoped">
+                <!--TV Packaging And Services tab-->
+                <lightning:tab label="TV Packaging And Services">
+                    <div class="slds-col slds-box">
+                        <div class="slds-align_left slds-theme--alt-inverse">
+                            <lightning:icon iconName="custom:custom113" size="small" />&nbsp;
+                            <strong><ui:button class="customButton" label="Distributor Video Product Offerings" press="{!c.navigateConsolidateView}"/></strong>
+                        </div>
+                        <br></br>
+                        <div class="slds-align_left ">
+                            <lightning:icon iconName="custom:custom113" size="small" />&nbsp;
+                            <ui:button class="customButton" label="Manage Video Product Offerings"  press="{!c.navigateVPO}"/>
+                        </div><br/>
+                        <div class="slds-align_left ">
+                            <lightning:icon iconName="custom:custom113" size="small" />&nbsp;
+                            <ui:button class="customButton" label="Manage Distributor Packages " press="{!c.navigateDistributorPkg}"/>
+                        </div>
+                    </div>
+                </lightning:tab>
+                <!--Manage Master data tab-->
+                <lightning:tab label="Manage Master Data">
+                    <div class="slds-col slds-box">
+                        <div class="slds-align_left">
+                            <lightning:icon iconName="standard:service_contract" size="small" />&nbsp;
+                            <ui:button class="customButton" label="Manage Standard service names" press="{!c.navigateServiceMaster}"/>
+                        </div>
+                        <br></br>
+                        <div class="slds-align_left ">
+                            <lightning:icon iconName="custom:custom17" size="small" />&nbsp;
+                            <ui:button class="customButton" label="Manage Pricing Types" press="{!c.navigatePricingType}"/>
+                        </div><br/>
+                        <div class="slds-align_left ">
+                            <lightning:icon iconName="doctype:pack" size="small" />&nbsp;
+                            <ui:button class="customButton" label="Package Data Generation " />
+                        </div>
+                    </div>
+                </lightning:tab>
+                <!--Reports tab-->
+                <lightning:tab label="Reports">
+                    <div class="slds-col slds-box">
+                        <div class="slds-align_left">
+                            <lightning:icon iconName="standard:report" size="small" />&nbsp;
+                            <ui:button class="customButton" label="Package Visualization Report"  press="{!c.openPkgVisualReport}"/>
+                        </div>
+                        <br></br>
+                        <div class="slds-align_left ">
+                            <lightning:icon iconName="standard:report" size="small" />&nbsp;
+                            <ui:button class="customButton" label="All Package Report" press="{!c.openAllPkgReport}"/>
+                        </div><br/>
+                        <div class="slds-align_left ">
+                            <lightning:icon iconName="standard:report" size="small" />&nbsp;
+                            <ui:button class="customButton" label="Distributor Packaging Trend Report" press="{!c.openPkgTrendReport}"/>
+                        </div>
+                    </div>
+                </lightning:tab>
+                
+                 <lightning:tab label="TV Packaging And Services">
+<div class="myClass">
+      <p>hello i am your page first line</p>
+      <p>hello i am your page second line</p>  
+      <p>hello i am your page third line</p>   
+</div>
+</lightning:tab>
+                
+            </lightning:tabset>
+        </lightning:card>
+    </div>
+</aura:component>

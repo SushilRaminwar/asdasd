@@ -1,0 +1,727 @@
+public class DocumentRequestListExtention {
+    
+    public List<TaxInfoWrapper> intenationalTaxWrapperList{get;set;}
+    public International_Tax_Credit__c iTC{get;set;}
+    public String taxId{get;set;}
+    public Boolean checking{get;set;}
+    public Boolean inscopeChk{get;set;}
+    public String[] programs = new String[]{};
+    public Boolean checkCAFED{get;set;}
+    public Boolean checkCAPROV{get;set;}
+    public Boolean checkCASFX{get;set;}
+    public Boolean checkCANADAWF{get;set;}
+    public Boolean checkNEWYORKWF{get;set;}
+    public Boolean checkILLINOISWF{get;set;}
+    public string passTodoTask{get;set;}
+    public string passTodoTask1{get;set;}
+    public string passTodoTask2{get;set;}
+    public string passTodoTask3{get;set;}
+    public string passTodoTask4{get;set;}
+    public string passTodoTask5{get;set;}
+    public string passTodoTask6{get;set;}
+    
+    public String passAssignRes{get;set;}
+    public String passAssignRes1{get;set;}
+    public String passAssignRes2{get;set;}
+    public String passAssignRes3{get;set;}
+    public String passAssignRes4{get;set;}
+    public String passAssignRes5{get;set;}
+     public String passAssignRes6{get;set;}
+    /*
+    public string passAssignDate{get;set;}
+    public string passAssignDate1{get;set;}
+    public string passAssignDate2{get;set;}
+    */
+    public string passDocVerified1{get;set;}
+    public string passDocVerified2{get;set;}
+    public string passDocVerified3{get;set;}
+    public string passDocVerified{get;set;}
+    public string passDocVerified4{get;set;}
+    public string passDocVerified5{get;set;}
+    public string passDocVerified6{get;set;}
+    
+    public string passDocUpload1{get;set;}
+    public string passDocUpload2{get;set;}
+    public string passDocUpload3{get;set;}
+    public string passDocUpload{get;set;}
+    public string passDocUpload4{get;set;}
+    public string passDocUpload5{get;set;}
+    public string passDocUpload6{get;set;}
+    public Id attIdtoSendMail{get;set;}
+    
+    public DocumentRequestListExtention(ApexPages.StandardController controller) {
+        system.debug(checking+'==='+passTodoTask);
+        //passTodoTask = '';
+        //checking = false;
+        List<International_Tax_Credit_Attachment__c> internationalTaxList = new List<International_Tax_Credit_Attachment__c>();
+        intenationalTaxWrapperList = new List<TaxInfoWrapper>();
+        taxId = ApexPages.currentPage().getParameters().get('id');
+        system.debug('===='+taxId);
+        if(taxId != Null){
+            iTC = [Select Id,CAPROV_UtilizationDocDueDate__c,CAFE_UtilizationDocDueDate__c,CANADA_WFAssigned_Resource__c,CANADAWF_UtilizationDocDueDate__c,
+                    Incentive_Programs__c,Incentive_Program_Workflow__c,CASFX_UtilizationDocDueDate__c,CANADAWF_UtilizationUpload__c,CANADAWF_UtilizationVerified__c,
+                    CA_FED_UtilizationDocAssignedDate__c,CA_SFX_UtilizationDocAssignedDate__c,CA_PROV_UtilizationDocAssignedDate__c,
+                    CAFE_UtilizationUpload__c,CAProv_UtilizationUpload__c,CASFX_UtilizationUpload__c,
+                    CAFE_UtilizationVerified__c,CAProv_UtilizationVerified__c,CASFX_UtilizationVerified__c,
+                    CAProsAssigned_Resource__c,CASFXAssigned_Resource__c,CAFEAssigned_Resource__c,NewYork_WF_AssignedResource__c,NewYorkWF_UtilizationDocDueDate__c,NewYorkWF_UtilizationUpload__c,NewYork_WF_UtilizationVerified__c,
+                    illinoisWF_Assigned_Resource__c,illinoisWF_UtilizationDocDueDate__c,illinoisWF_UtilizationUpload__c,illinoisWF_UtilizationVerified__c     
+                    From International_Tax_Credit__c 
+                    Where id=:taxId ];
+        }
+        
+        system.debug('iTC ==='+iTC );
+        
+        internationalTaxList = [Select id,International_Tax_Credit__r.Name,Attachment_Version__c,
+                                Documents_Assigned_Date__c,Doc_Due_Date__c,Assigned_Resource__c,Assigned_Resource__r.name,
+                                Agings__c,Documents_Upload__c,Documents_Verified__c,Days_Out__c,Inscope__c,Recap_Report__c 
+                                From International_Tax_Credit_Attachment__c 
+                                Where International_Tax_Credit__c =: taxId order by order__c asc];
+        
+        if(internationalTaxList.size()>0){
+        
+            for(International_Tax_Credit_Attachment__c iTCA : internationalTaxList){
+                intenationalTaxWrapperList.add(new TaxInfoWrapper(iTCA,iTCA.id));
+            }
+        }
+        system.debug(passTodoTask);
+    }
+    
+    public void updateSendMail(){
+        system.debug('Att Id: '+attIdtoSendMail);
+        International_Tax_Credit_Attachment__c  taxAtt = [select id,Send_Mail__c from International_Tax_Credit_Attachment__c where id =:attIdtoSendMail];
+        taxAtt.Send_Mail__c = TRUE;
+        update taxAtt;
+    }
+    
+    public List<SelectOption> getItems() {
+            List<SelectOption> options = new List<SelectOption>();
+            //options.add(new SelectOption('None','--None--'));
+            options.add(new SelectOption('Canadian Federal','Canadian Federal'));
+            options.add(new SelectOption('Canadian Provincial','Canadian Provincial'));
+            options.add(new SelectOption('Canadian Special Effects','Canadian Special Effects'));
+            return options;
+            
+        }
+            
+        public String[] getprograms() {
+            //If multiselect is false, programs must be of type String
+            return programs;
+        }
+            
+        public void setprograms(String[] programs) {
+            //If multiselect is false, programs must be of type String
+            this.programs = programs;
+            system.debug(this.programs);
+        }
+        
+       
+    public void details() {
+        system.debug(passTodoTask+'=== calling');
+           //checking = true;
+           
+           checking = true;
+           system.debug(checking );
+           if(checking ){
+               inscopeChk =true;
+               
+           }else{
+               inscopeChk = false;
+           }
+           system.debug('inscopeChk =inscopeChk =='+inscopeChk );
+        //return null;
+    }
+    
+    public PageReference updateITCA(){
+        string st = myMethod1();
+        system.debug(st +'==From update==='+passTodoTask1);
+        String caSFXDueDate= '';//passTodoTask;//myMethod();
+        String caProsDueDate = '';//passTodoTask2;
+        String caFEDueDate = '';//passTodoTask1;
+        string canadaWFDuedate='';
+        string newyorkWFDuedate='';
+        string illinoisWFDuedate='';
+        String caFEassigRes = '';//passAssignRes;
+        String caProsassigRes = '';//passAssignRes1;
+        String caSFXassigRes = '';//passAssignRes2;
+        string canadaWFassigRes='';
+        string newyorkWFassigRes='';
+        string illinoisWFassigRes='';
+        /*
+        String caFEAssignDate = '';//passAssignDate; 
+        String caProsAssignDate = '';//passAssignDate1;
+        String caSFXAssignDate= '';//passAssignDate2;
+        */
+        String caFEUpload = '';//passDocUpload1; 
+        String caProsUpload = '';//passDocUpload2;
+        String caSFXUpload = '';//passDocUpload3;
+        string canadaWFUpload='';
+        string newyorkWFUpload='';
+        string illinoisWFUpload='';
+        
+        String caFEVerified = '';//passDocVerified1; 
+        String caProsVerified = '';//passDocVerified2;
+        String caSFXVerified = '';//passDocVerified3;
+        string canadaWFVerified='';
+        string newyorkWFVerified='';
+        string illinoisWFVerified='';
+        
+        system.debug(iTC+'values updatewtyet==='+caSFXDueDate+'==caProsDueDate='+caProsDueDate+'==caFEDueDate =='+caFEDueDate );
+        system.debug('==passAssignRes=='+passAssignRes+'====passAssignRes1=='+passAssignRes1+'===passAssignRes2==='+passAssignRes2);
+        
+         List<International_Tax_Credit_Attachment__c> updateList =new List<International_Tax_Credit_Attachment__c>();
+        system.debug(passTodoTask+'====Update=='+intenationalTaxWrapperList);
+        if(intenationalTaxWrapperList.size()>0){
+                for(TaxInfoWrapper txca :intenationalTaxWrapperList){
+                    updateList.add(txca.taxCreadit);
+                }
+        }
+        if(updateList.size()>0){
+            try{
+                upsert updateList;
+            }catch(Exception e) {}
+        }
+        system.debug('==='+updateList);
+        
+        caSFXDueDate= passTodoTask;//myMethod();
+        caProsDueDate = passTodoTask2;
+        caFEDueDate = passTodoTask1;
+        canadaWFDuedate=passTodoTask6;
+        newyorkWFDuedate=passTodoTask4;
+        illinoisWFDuedate=passTodoTask5;
+        
+        caFEassigRes = passAssignRes;
+        caProsassigRes = passAssignRes1;
+        caSFXassigRes = passAssignRes2;
+        canadaWFassigRes=passAssignRes6;
+        newyorkWFassigRes=passAssignRes4;
+        illinoisWFassigRes=passAssignRes5;
+        /*
+        caFEAssignDate = passAssignDate; 
+        caProsAssignDate = passAssignDate1;
+        caSFXAssignDate= passAssignDate2;
+        */
+        caFEUpload = passDocUpload1; 
+        caProsUpload = passDocUpload2;
+        caSFXUpload= passDocUpload3;
+        canadaWFUpload=passDocUpload6;
+        newyorkWFUpload=passDocUpload4;
+        illinoisWFUpload=passDocUpload5;
+        
+        caFEVerified = passDocVerified1; 
+        caProsVerified = passDocVerified2;
+        caSFXVerified= passDocVerified3;
+        canadaWFVerified=passDocVerified6;
+        newyorkWFVerified=passDocVerified4;
+        illinoisWFVerified=passDocVerified5;
+        
+        system.debug(iTC+'values updatewtyet==='+caSFXDueDate+'==caProsDueDate='+caProsDueDate+'==caFEDueDate =='+caFEDueDate );
+        system.debug('==passAssignRes=='+passAssignRes+'====passAssignRes1=='+passAssignRes1+'===passAssignRes2==='+passAssignRes2);
+        //system.debug('==caFEAssignDate =='+caFEAssignDate +'====caProsAssignDate =='+caProsAssignDate +'===caSFXAssignDate==='+caSFXAssignDate);
+        
+        List<International_Tax_Credit__c> updateITC = new List<International_Tax_Credit__c>();
+        International_Tax_Credit__c iTCUpdate = new International_Tax_Credit__c(id=iTC.id);
+
+        //assigned Dates
+        /*
+        if( caSFXAssignDate != Null ){
+            iTCUpdate.CA_SFX_UtilizationDocAssignedDate__c = Decimal.valueof(caSFXAssignDate);
+            updateITC.add(iTC);
+        }else if(caProsAssignDate != Null){
+            iTCUpdate.CA_PROV_UtilizationDocAssignedDate__c = Decimal.valueof(caProsAssignDate );
+            updateITC.add(iTC);
+        }else if(caFEAssignDate != Null){
+            system.debug('==assigned==');
+            iTCUpdate.CA_FED_UtilizationDocAssignedDate__c = Decimal.valueof(caFEAssignDate );
+            updateITC.add(iTC);
+        }
+        */
+        
+        //Due Dates
+        if( caSFXDueDate != Null ){
+            iTCUpdate.CASFX_UtilizationDocDueDate__c = Decimal.valueof(caSFXDueDate);
+            updateITC.add(iTC);
+        }else if(caProsDueDate != Null){
+            iTCUpdate.CAPROV_UtilizationDocDueDate__c = Decimal.valueof(caProsDueDate );
+            updateITC.add(iTC);
+        }else if(caFEDueDate != Null){
+            iTCUpdate.CAFE_UtilizationDocDueDate__c = Decimal.valueof(caFEDueDate );
+            updateITC.add(iTC);
+        }else if(canadaWFDuedate != Null){
+            iTCUpdate.CANADAWF_UtilizationDocDueDate__c= Decimal.valueof(canadaWFDuedate);
+            updateITC.add(iTC);
+        }else if(newyorkWFDuedate != Null){
+            iTCUpdate.NewYorkWF_UtilizationDocDueDate__c= Decimal.valueof(newyorkWFDuedate);
+            updateITC.add(iTC);
+        }else if(illinoisWFDuedate != Null){
+            iTCUpdate.illinoisWF_UtilizationDocDueDate__c= Decimal.valueof(illinoisWFDuedate);
+            updateITC.add(iTC);
+        }
+        
+        //Assigned Resource
+        if(caFEassigRes != Null ){
+            iTCUpdate.CAFEAssigned_Resource__c = Decimal.valueof(caFEassigRes);
+            updateITC.add(iTC);
+        }else if(caProsassigRes != Null ){
+            system.debug('====='+caProsassigRes);
+            iTCUpdate.CAProsAssigned_Resource__c = Decimal.valueof(caProsassigRes);
+            updateITC.add(iTC);
+        }else if(caSFXassigRes != Null ){
+            iTCUpdate.CASFXAssigned_Resource__c = Decimal.valueof(caSFXassigRes);
+            updateITC.add(iTC);
+        }else if(canadaWFassigRes!= Null ){
+            iTCUpdate.CANADA_WFAssigned_Resource__c= Decimal.valueof(canadaWFassigRes);
+            updateITC.add(iTC);
+        }else if(newyorkWFassigRes!= Null ){
+            iTCUpdate.NewYork_WF_AssignedResource__c= Decimal.valueof(newyorkWFassigRes);
+            updateITC.add(iTC);
+        }else if(illinoisWFassigRes!= Null ){
+            iTCUpdate.illinoisWF_Assigned_Resource__c= Decimal.valueof(illinoisWFassigRes);
+            updateITC.add(iTC);
+        }
+        
+        // Doc upload
+        if(caFEUpload != Null ){
+            iTCUpdate.CAFE_UtilizationUpload__c = Decimal.valueof(caFEUpload);
+            updateITC.add(iTC);
+        }else if(caProsUpload != Null ){
+            system.debug('====='+caProsUpload);
+            iTCUpdate.CAProv_UtilizationUpload__c = Decimal.valueof(caProsUpload);
+            updateITC.add(iTC);
+        }else if(caSFXUpload != Null ){
+            iTCUpdate.CASFX_UtilizationUpload__c = Decimal.valueof(caSFXUpload);
+            updateITC.add(iTC);
+        }else if(canadaWFUpload!= Null ){
+            iTCUpdate.CANADAWF_UtilizationUpload__c= Decimal.valueof(canadaWFUpload);
+            updateITC.add(iTC);
+        }else if(newyorkWFUpload!= Null ){
+            iTCUpdate.NewYorkWF_UtilizationUpload__c    = Decimal.valueof(newyorkWFUpload);
+            updateITC.add(iTC);
+        }else if(illinoisWFUpload!= Null ){
+            iTCUpdate.illinoisWF_UtilizationUpload__c= Decimal.valueof(illinoisWFUpload);
+            updateITC.add(iTC);
+        }
+        
+        // Doc Verified 
+        if(caFEVerified != Null ){
+            iTCUpdate.CAFE_UtilizationVerified__c = Decimal.valueof(caFEVerified);
+            updateITC.add(iTC);
+        }else if(caProsVerified != Null ){
+            system.debug('====='+caProsVerified);
+            iTCUpdate.CAProv_UtilizationVerified__c = Decimal.valueof(caProsVerified);
+            updateITC.add(iTC);
+        }else if(caSFXVerified != Null ){
+            iTCUpdate.CASFX_UtilizationVerified__c = Decimal.valueof(caSFXVerified);
+            updateITC.add(iTC);
+        }else if(canadaWFVerified!= Null ){
+            iTCUpdate.CANADAWF_UtilizationVerified__c= Decimal.valueof(canadaWFVerified);
+            updateITC.add(iTC);
+        }else if(newyorkWFVerified!= Null ){
+            iTCUpdate.NewYork_WF_UtilizationVerified__c= Decimal.valueof(newyorkWFVerified);
+            updateITC.add(iTC);
+        }else if(illinoisWFVerified!= Null ){
+            iTCUpdate.illinoisWF_UtilizationVerified__c = Decimal.valueof(illinoisWFVerified);
+            updateITC.add(iTC);
+        }
+        
+        try{
+        
+        Update iTCUpdate;
+        }catch(Exception e){}
+        system.debug('==itc==='+iTCUpdate);
+        //International_Tax_Credit__c.CASFX_UtilizationDocDueDate__c = caSFXDueDate;
+       
+        return null;
+    }
+    
+    public void show(){
+        system.debug(passTodoTask+'===iTc=='+iTC);
+           
+        /*if(iTC.Incentive_Program_Workflow__c == 'CA FED'){
+            checkCAFED = true;
+            checkCAPROV = false;
+            checkCASFX = false;
+            checkCANADAWF = false;
+            checkNEWYORKWF =false;
+            checkILLINOISWF = false;
+        }else if(iTC.Incentive_Program_Workflow__c == 'CA PROV'){
+            checkCAFED = false;
+            checkCAPROV = true;
+            checkCASFX = false;
+            checkCANADAWF = false;
+            checkNEWYORKWF =false;
+            checkILLINOISWF = false;
+        }else if(iTC.Incentive_Program_Workflow__c == 'CA SFX'){
+            checkCAFED = false;
+            checkCAPROV = false;
+            checkCASFX = true;
+            checkCANADAWF = false;
+            checkNEWYORKWF =false;
+            checkILLINOISWF = false;
+        }else */
+        
+        if(iTC.Incentive_Program_Workflow__c == 'Canada WF'){
+            checkCAFED = false;
+            checkCAPROV = false;
+            checkCASFX = false;
+            checkCANADAWF = true;
+            checkNEWYORKWF =false;
+            checkILLINOISWF = false;        
+        }else if(iTC.Incentive_Program_Workflow__c == 'New York WF'){
+            checkCAFED = false;
+            checkCAPROV = false;
+            checkCASFX = false;
+            checkCANADAWF = false;
+            checkNEWYORKWF =true;
+            checkILLINOISWF = false;
+        
+        }else if(iTC.Incentive_Program_Workflow__c == 'Illinois WF'){
+            checkCAFED = false;
+            checkCAPROV = false;
+            checkCASFX = false;
+            checkCANADAWF = false;
+            checkNEWYORKWF =false;
+            checkILLINOISWF = true;
+        
+        }else{
+            checkCAFED = false;
+            checkCAPROV = false;
+            checkCASFX = false;
+            checkCANADAWF = false;
+            checkNEWYORKWF =false;
+            checkILLINOISWF = false;
+        }
+        
+    }
+    
+    public class TaxInfoWrapper{
+        
+        public International_Tax_Credit_Attachment__c taxCreadit{get;set;}
+        public Id id{get;set;}
+        
+        public TaxInfoWrapper(International_Tax_Credit_Attachment__c taxCreadit, Id id){
+            
+            this.taxCreadit= taxCreadit;
+            this.id = id;
+            
+        }  
+             
+    }
+    public String myMethod(){
+        System.debug('myString: sfx' + passTodoTask);
+        return passTodoTask;
+    }
+    public String myMethod1(){
+        System.debug('myString fe: ' + passTodoTask1);
+        return passTodoTask1;
+    }
+    public String myMethod2(){
+        System.debug('myString:pros ' + passTodoTask2);
+        return passTodoTask2;
+    }
+    
+    //Due Date
+    public List<PieWedgeData> getPieDataDueDate() {
+    List<PieWedgeData> data = new List<PieWedgeData>();
+    /*
+    if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA FED'){
+        data.add(new PieWedgeData( '',iTC.CAFE_UtilizationDocDueDate__c));   
+        
+        if(iTC.CAFE_UtilizationDocDueDate__c== Null ){
+            iTC.CAFE_UtilizationDocDueDate__c= 0.00;
+            data.add(new PieWedgeData( ' ',(100 - iTC.CAFE_UtilizationDocDueDate__c)));
+        }else{
+            data.add(new PieWedgeData( ' ',(100 - iTC.CAFE_UtilizationDocDueDate__c)));
+        }
+        
+    
+    } else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA PROV'){
+        data.add(new PieWedgeData( '',iTC.CAPROV_UtilizationDocDueDate__c));
+        
+        
+        if(iTC.CAPROV_UtilizationDocDueDate__c== Null ){
+            iTC.CAPROV_UtilizationDocDueDate__c= 0.00;
+            data.add(new PieWedgeData( ' ',(100 - iTC.CAPROV_UtilizationDocDueDate__c)));
+        }else{
+            data.add(new PieWedgeData( ' ',(100 - iTC.CAPROV_UtilizationDocDueDate__c)));
+        } 
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA SFX'){
+        data.add(new PieWedgeData( '',iTC.CASFX_UtilizationDocDueDate__c));
+        
+        if(iTC.CASFX_UtilizationDocDueDate__c== Null ){
+            iTC.CASFX_UtilizationDocDueDate__c= 0.00;
+            data.add(new PieWedgeData( ' ',(100 - iTC.CASFX_UtilizationDocDueDate__c)));
+        }else{
+            data.add(new PieWedgeData( ' ',(100 - iTC.CASFX_UtilizationDocDueDate__c)));
+        }
+        
+    }else */
+    if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Canada WF'){
+        data.add(new PieWedgeData( '',iTC.CANADAWF_UtilizationDocDueDate__c));
+        
+        if(iTC.CANADAWF_UtilizationDocDueDate__c== Null ){
+            iTC.CANADAWF_UtilizationDocDueDate__c= 0.00;
+            data.add(new PieWedgeData( ' ',(100 - iTC.CANADAWF_UtilizationDocDueDate__c)));
+        }else{
+            data.add(new PieWedgeData( ' ',(100 - iTC.CANADAWF_UtilizationDocDueDate__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'New York WF'){
+        data.add(new PieWedgeData( '',iTC.NewYorkWF_UtilizationDocDueDate__c));
+        
+        if(iTC.NewYorkWF_UtilizationDocDueDate__c== Null ){
+            iTC.NewYorkWF_UtilizationDocDueDate__c= 0.00;
+            data.add(new PieWedgeData( ' ',(100 - iTC.NewYorkWF_UtilizationDocDueDate__c)));
+        }else{
+            data.add(new PieWedgeData( ' ',(100 - iTC.NewYorkWF_UtilizationDocDueDate__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Illinois WF'){
+        data.add(new PieWedgeData( '',iTC.illinoisWF_UtilizationDocDueDate__c));
+        
+        if(iTC.illinoisWF_UtilizationDocDueDate__c== Null ){
+            iTC.illinoisWF_UtilizationDocDueDate__c= 0.00;
+            data.add(new PieWedgeData( ' ',(100 - iTC.illinoisWF_UtilizationDocDueDate__c)));
+        }else{
+            data.add(new PieWedgeData( ' ',(100 - iTC.illinoisWF_UtilizationDocDueDate__c)));
+        }  
+        
+    }
+    
+    return data;
+    }
+
+    // Wrapper class
+    public class PieWedgeData {
+        public String dateType{ get; set; }
+        public Decimal percentageCount { get; set; }
+        public PieWedgeData( String dateType,Decimal percentageCount) {
+            this.dateType = dateType;
+            this.percentageCount = percentageCount;
+        }
+    }
+    
+    //Assigned Resource
+    public List<PieWedgeDataAR> getPieDataAssignedResource() {
+    
+    List<PieWedgeDataAR> data = new List<PieWedgeDataAR>();
+    /*
+    if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA FED'){
+        data.add(new PieWedgeDataAR( '',iTC.CAFEAssigned_Resource__c));
+        
+        if(iTC.CAFEAssigned_Resource__c == Null ){
+             iTC.CAFEAssigned_Resource__c= 0.00;
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CAFEAssigned_Resource__c)));
+        }else{
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CAFEAssigned_Resource__c)));
+        }
+    
+    } else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA PROV'){
+        data.add(new PieWedgeDataAR( '',iTC.CAProsAssigned_Resource__c));
+        if(iTC.CAProsAssigned_Resource__c == Null ){
+             iTC.CAProsAssigned_Resource__c= 0.00;
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CAProsAssigned_Resource__c)));
+        }else{
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CAProsAssigned_Resource__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA SFX'){
+        data.add(new PieWedgeDataAR( '',iTC.CASFXAssigned_Resource__c));
+        if(iTC.CASFXAssigned_Resource__c == Null ){
+             iTC.CASFXAssigned_Resource__c= 0.00;
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CASFXAssigned_Resource__c)));
+        }else{
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CASFXAssigned_Resource__c)));
+        }
+        
+    }else */
+        if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Canada WF'){
+        data.add(new PieWedgeDataAR( '',iTC.CANADA_WFAssigned_Resource__c));
+        if(iTC.CANADA_WFAssigned_Resource__c== Null ){
+             iTC.CANADA_WFAssigned_Resource__c= 0.00;
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CANADA_WFAssigned_Resource__c)));
+        }else{
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.CANADA_WFAssigned_Resource__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'New York WF'){
+        data.add(new PieWedgeDataAR( '',iTC.NewYork_WF_AssignedResource__c));
+        if(iTC.NewYork_WF_AssignedResource__c== Null ){
+             iTC.NewYork_WF_AssignedResource__c= 0.00;
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.NewYork_WF_AssignedResource__c)));
+        }else{
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.NewYork_WF_AssignedResource__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Illinois WF'){
+        data.add(new PieWedgeDataAR( '',iTC.illinoisWF_Assigned_Resource__c));
+        if(iTC.illinoisWF_Assigned_Resource__c== Null ){
+             iTC.illinoisWF_Assigned_Resource__c= 0.00;
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.illinoisWF_Assigned_Resource__c)));
+        }else{
+            data.add(new PieWedgeDataAR( ' ',(100 - iTC.illinoisWF_Assigned_Resource__c)));
+        }
+        
+    }
+    
+    return data;
+    }
+
+    // Wrapper class
+    public class PieWedgeDataAR {
+        public String dateType{ get; set; }
+        public Decimal percentageCount { get; set; }
+        public PieWedgeDataAR( String dateType,Decimal percentageCount) {
+            this.dateType = dateType;
+            this.percentageCount = percentageCount;
+        }
+    }
+    
+    //Upload
+    public List<PieWedgeDataUL> getPieDataUpload() {
+
+    List<PieWedgeDataUL> data = new List<PieWedgeDataUL>();
+    /*
+    if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA FED'){
+        data.add(new PieWedgeDataUL( '',iTC.CAFE_UtilizationUpload__c));
+        if(iTC.CAFE_UtilizationUpload__c == Null ){
+             iTC.CAFE_UtilizationUpload__c= 0.00;
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CAFE_UtilizationUpload__c)));
+        }else{
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CAFE_UtilizationUpload__c)));
+        }
+    } else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA PROV'){
+        data.add(new PieWedgeDataUL( '',iTC.CAProv_UtilizationUpload__c));
+        if(iTC.CAProv_UtilizationUpload__c == Null ){
+             iTC.CAProv_UtilizationUpload__c= 0.00;
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CAProv_UtilizationUpload__c)));
+        }else{
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CAProv_UtilizationUpload__c)));
+        }
+        
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA SFX'){
+        data.add(new PieWedgeDataUL( '',iTC.CASFX_UtilizationUpload__c));
+        if(iTC.CASFX_UtilizationUpload__c == Null ){
+             iTC.CASFX_UtilizationUpload__c= 0.00;
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CASFX_UtilizationUpload__c)));
+        }else{
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CASFX_UtilizationUpload__c)));
+        }
+        
+    }else*/ if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Canada WF'){
+        data.add(new PieWedgeDataUL( '',iTC.CANADAWF_UtilizationUpload__c));
+        if(iTC.CANADAWF_UtilizationUpload__c== Null ){
+             iTC.CANADAWF_UtilizationUpload__c= 0.00;
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CANADAWF_UtilizationUpload__c)));
+        }else{
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.CANADAWF_UtilizationUpload__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'New York WF'){
+        data.add(new PieWedgeDataUL( '',iTC.NewYorkWF_UtilizationUpload__c));
+        if(iTC.NewYorkWF_UtilizationUpload__c== Null ){
+             iTC.NewYorkWF_UtilizationUpload__c= 0.00;
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.NewYorkWF_UtilizationUpload__c)));
+        }else{
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.NewYorkWF_UtilizationUpload__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Illinois WF'){
+        data.add(new PieWedgeDataUL( '',iTC.illinoisWF_UtilizationUpload__c));
+        if(iTC.illinoisWF_UtilizationUpload__c== Null ){
+             iTC.illinoisWF_UtilizationUpload__c= 0.00;
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.illinoisWF_UtilizationUpload__c)));
+        }else{
+            data.add(new PieWedgeDataUL( ' ',(100 - iTC.illinoisWF_UtilizationUpload__c)));
+        }
+        
+    }
+    return data;
+    }
+
+    // Wrapper class
+    public class PieWedgeDataUL {
+        public String dateType{ get; set; }
+        public Decimal percentageCount { get; set; }
+        public PieWedgeDataUL( String dateType,Decimal percentageCount) {
+            this.dateType = dateType;
+            this.percentageCount = percentageCount;
+        }
+    }
+    
+    //Verified
+    public List<PieWedgeDataVR> getPieDataVerified() {
+     
+    List<PieWedgeDataVR> data = new List<PieWedgeDataVR>();
+    /*if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA FED'){
+        data.add(new PieWedgeDataVR( '',iTC.CAFE_UtilizationVerified__c));
+        
+        if(iTC.CAFE_UtilizationVerified__c == Null ){
+             iTC.CAFE_UtilizationVerified__c= 0.00;
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CAFE_UtilizationVerified__c)));
+        }else{
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CAFE_UtilizationVerified__c)));
+        }
+    
+    } else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA PROV'){
+        data.add(new PieWedgeDataVR( '' ,iTC.CAProv_UtilizationVerified__c));
+        if(iTC.CAProv_UtilizationVerified__c == Null ){
+             iTC.CAProv_UtilizationVerified__c= 0.00;
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CAProv_UtilizationVerified__c)));
+        }else{
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CAProv_UtilizationVerified__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'CA SFX'){
+        data.add(new PieWedgeDataVR( '',iTC.CASFX_UtilizationVerified__c));
+        if(iTC.CASFX_UtilizationVerified__c == Null ){
+             iTC.CASFX_UtilizationVerified__c= 0.00;
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CASFX_UtilizationVerified__c)));
+        }else{
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CASFX_UtilizationVerified__c)));
+        }
+        
+    }else*/
+        if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Canada WF'){
+        data.add(new PieWedgeDataVR( '',iTC.CANADAWF_UtilizationVerified__c));
+        if(iTC.CANADAWF_UtilizationVerified__c== Null ){
+             iTC.CANADAWF_UtilizationVerified__c= 0.00;
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CANADAWF_UtilizationVerified__c)));
+        }else{
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.CANADAWF_UtilizationVerified__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'New York WF'){
+        data.add(new PieWedgeDataVR( '',iTC.NewYork_WF_UtilizationVerified__c));
+        if(iTC.NewYork_WF_UtilizationVerified__c== Null ){
+             iTC.NewYork_WF_UtilizationVerified__c= 0.00;
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.NewYork_WF_UtilizationVerified__c)));
+        }else{
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.NewYork_WF_UtilizationVerified__c)));
+        }
+        
+    }else if(iTC.Incentive_Program_Workflow__c != Null && iTC.Incentive_Program_Workflow__c == 'Illinois WF'){
+        data.add(new PieWedgeDataVR( '',iTC.illinoisWF_UtilizationVerified__c));
+        if(iTC.illinoisWF_UtilizationVerified__c== Null ){
+             iTC.illinoisWF_UtilizationVerified__c= 0.00;
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.illinoisWF_UtilizationVerified__c)));
+        }else{
+            data.add(new PieWedgeDataVR( ' ',(100 - iTC.illinoisWF_UtilizationVerified__c)));
+        }
+        
+    }
+    return data;
+    }
+
+    // Wrapper class
+    public class PieWedgeDataVR {
+        public String dateType{ get; set; }
+        public Decimal percentageCount { get; set; }
+        public PieWedgeDataVR( String dateType,Decimal percentageCount) {
+            this.dateType = dateType;
+            this.percentageCount = percentageCount;
+        }
+    }
+    
+}

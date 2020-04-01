@@ -1,0 +1,28 @@
+The application admin would like the capability to single click accept/reject logic when validating documents on the document request list (DRL).
+
+When the application admin clicks VIEW for that specific DRL line item, they would like a browser to open with the document displayed and 2 options available.
+
+clicking ACCEPT should update the document verified flag for the line item and close out the document in the browser.
+
+clicking REJECT should delete the attachment, notify the resource that the document was rejected and needs to be re-uploaded, and close out the document in the browser.
+above is for admin
+2:37 PM
+hmm
+
+
+
+The application admin can assign document requests to a resource and assign a due date from the Document Request List (DRL) section of the International Tax Credit main page.
+
+An email goes out to the assigned resource notifying them of the assignment and due date.
+
+A hyperlink to the specific tax credit is provided in the email.
+
+When the link is clicked, it returns the tax credit main page and the resource needs to select what document to upload.  This is a possible failure point where a resource may select and incorrectly upload a document to an incorrect line item on the DRL.
+
+The business would like the capability where the hyperlink in the email notification only allows uploads to that assigned document type for that resource for that tax credit.
+
+The business would like to limit the possible failure point of a resource incorrectly picking a document type for upload.
+
+Question:  Is there a way to limit the possible version(document types) to only those that were assigned to that resource on that tax credit?
+
+this is for Resource

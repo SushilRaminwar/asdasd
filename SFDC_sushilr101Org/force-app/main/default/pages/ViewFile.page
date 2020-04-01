@@ -1,0 +1,22 @@
+<apex:page standardController="Documentasdasd__c" extensions="viewFileDelFile">
+
+<apex:form >
+
+<!--  <apex:outputLink value="00P2v000023Zsmv" target="_blank">View File</apex:outputLink>-->
+
+<apex:commandButton action="{! DeleteDoc}" value="Reject" title="will delete this record" reRender="form">
+      <apex:param name="delId" assignTo="{!delId}" value="{!currentRecordId}" /> 
+    </apex:commandButton>
+
+    <apex:commandButton value="Accept" action="{!save}"/>
+      
+  <iframe height="600px" id="theIframe" name="theIframe" src="https://sushilr101-dev-ed--c.documentforce.com/servlet/servlet.FileDownload?file=00P2v000023Zsmv" width="100%"></iframe>
+
+<apex:pageBlock >
+    <apex:pageBlockSection title="Current account record Id is : {!currentRecordId}" collapsible="false">
+    </apex:pageBlockSection>
+</apex:pageBlock>
+  
+</apex:form>
+  <!-- End Default Content REMOVE THIS -->
+</apex:page>

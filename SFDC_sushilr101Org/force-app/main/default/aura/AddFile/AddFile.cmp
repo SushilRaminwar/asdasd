@@ -1,0 +1,16 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId,force:lightningQuickAction,lightning:actionOverride" access="global" >
+
+	<center><b>This is a Lightning component </b></center>
+       <aura:attribute name="accept" type="List" default="['.jpg', '.jpeg', '.txt']"/>
+    <aura:attribute name="multiple" type="Boolean" default="true"/>
+    <aura:attribute name="disabled" type="Boolean" default="false"/>
+    <!--	<aura:attribute name="recordId" type="String" />lightning:actionOverride-->
+    <lightning:fileUpload  name="fileUploader"
+                           label= "Demo Upload"
+                           multiple="{!v.multiple}"
+                           accept="{!v.accept}"
+                           disabled="{!v.disabled}"
+                           recordId="a0g2v000013yxAgAAI"
+                           onuploadfinished="{! c.handleUploadFinished }"/>
+    
+</aura:component>

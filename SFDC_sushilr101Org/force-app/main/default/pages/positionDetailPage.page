@@ -1,0 +1,38 @@
+<apex:page standardController="Position__c">
+<!--<apex:detail />-->
+<apex:stylesheet value="{!URLFOR($Resource.MyStyle)}"/>
+<h1>
+ <apex:outputField value="{!Position__c.Status__c}"/> 
+
+ 
+<!--   <apex:pageBlock title="Position details">
+       <apex:pageblockSection >
+              -->
+
+   
+                <apex:dataList value="{!Position__c.Hiring_Manager__r}" var="h" >
+                    <apex:outputField value="{!h.name}"/>
+                </apex:dataList>
+                <br/>
+                     <apex:dataList value="{!Position__c.Owner}" var="o" >
+                    <apex:outputField value="{!o.name}"/>
+                </apex:dataList>
+             </h1>    
+                
+ <!--       </apex:pageblockSection>
+  </apex:pageBlock>       -->
+  
+  
+  
+  <apex:variable value="10" var="x"/>
+  <apex:outputText value="{!x}"/>
+  
+  
+  <br/>  <br/>
+  
+  <apex:image url="{!URLFOR($Resource.nbaLogo)}" width="500" height="200" />
+  
+  <br/>  <br/>
+  
+  
+</apex:page>

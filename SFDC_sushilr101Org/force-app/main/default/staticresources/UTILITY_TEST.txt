@@ -1,0 +1,47 @@
+@isTest(seeAllData=false)
+public class UtilityTest {
+  @isTest
+  public static void getQuarter_invertMap_getLabelString_Test(){
+        Date d = Date.today();
+        Utility.getQuarter(d);
+        d = d.addMonths(3);
+        Utility.getQuarter(d);
+        d = d.addMonths(3);
+        Utility.getQuarter(d);
+        d = d.addMonths(3);
+        Utility.getQuarter(d);
+        
+        Map<Integer,String> objectMap = new Map<Integer,String>();
+        objectMap.put(5,'5');
+        Utility.invertMap(objectMap);
+        
+        Utility.getLabelString('test');
+    }
+    
+    @isTest
+  public static void processMap_massUpdateFields_getMassUpdateFields_Test(){
+        Map<Object,Object> filterValueMap = new Map<Object,Object>();
+        filterValueMap.put('Show_Type__c','(Acquisition)');
+        filterValueMap.put('Show__r.Name','test');
+        filterValueMap.put('Show__r.Show_Type__c','Acquired Series');
+        filterValueMap.put('TV360__c','True');
+        filterValueMap.put('Target_Industry__c','(Apparel and Accessories)');
+        Map<String, SObjectField> fields = Schema.getGlobalDescribe().get('Marketing_Package__c').getDescribe().fields.getMap();
+        Utility.processMap(filterValueMap, fields);
+        
+        Utility.massUpdateFields(null, 'Marketing_Package__c');
+        List<String> massUpdateFields = new List<String>{'Show_Type__c', 'TV360__c', 'Target_Industry__c'};
+        Utility.massUpdateFields(massUpdateFields, 'Marketing_Package__c');
+    }
+    
+    @isTest
+  public static void getPicklistLabelValues_getPicklistValues_processFilterValues_Test(){
+        Map<String,String> fields = new Map<String,String>();
+        fields.put('0Marketing_Package__c', 'Target_Industry__c');
+        fields.put('0Show__c', 'Show_Type__c');
+        fields.put('1Marketing_Package__c', 'TV360__c');
+        fields.put('2Marketing_Package__c', 'Show_Type__c');
+        Utility.getPicklistLabelValues(Utility.processFilterValues(fields));
+        Utility.getPicklistValues(Utility.processFilterValues(fields));
+    }
+}

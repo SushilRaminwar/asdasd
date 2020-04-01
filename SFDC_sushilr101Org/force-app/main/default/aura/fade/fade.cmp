@@ -1,0 +1,15 @@
+<aura:component implements="flexipage:availableForAllPageTypes" access="global" >
+	 <aura:attribute name="message" type="String"/>
+    <aura:attribute name="severity" type="String"/>
+    <aura:attribute name="fadeTimeout" type="Integer" default="5000"/>
+    <aura:handler event="aura:doneRendering" action="{!c.doneRendering}"/>
+    <div class="slds-notify_container">
+        <div aura:id="alert" class="slds-notify slds-notify--alert slds-theme--alert-texture" role="alert">
+            <lightning:button class="slds-button slds-button--icon-inverse slds-notify__close" onclick="{!c.close}">
+                            <span class="slds-assistive-text">Close</span>
+            </lightning:button>
+            <span class="slds-assistive-text">Info</span>
+            <h2>{!v.message}</h2>
+        </div>
+    </div>
+</aura:component>

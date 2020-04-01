@@ -1,0 +1,18 @@
+.THIS .customButton{
+   background-color: #4279c2;
+   color: #ffffff; 
+}
+
+.THIS .myClassasd {
+    font-family: token(divFont);
+    font-weight: token(divFontWeight);
+    background-color: token(divBackgroundColor);
+    color: t(divTextColor);
+    margin: t(divMargin);
+}
+
+p.THIS {
+    font-family: token(fontFamily);
+    font-weight: token(fontWeightRegular);
+    outline: token(colorBorderWarning);
+}

@@ -1,0 +1,31 @@
+<apex:page standardController="account" >
+  <Apex:tabPanel >
+    <apex:tab label="Accounts" title="Accounts">
+        <apex:listViews type="Account"/>
+      </apex:tab>
+
+
+      <apex:tab label="Contacts" title="Contacts">
+           <apex:enhancedList type="Contact" rowsperPage="10" height="300" width="400" />
+      </apex:tab>
+      
+      <apex:tab label="Contact With name" title="Contacts">
+      
+      <apex:repeat value="{!account.contacts}" var="c">
+    
+<!--       
+        <apex:flash src="http://www.adobe.com/devnet/flash/samples/drawing_1/1_coordinates.swf" height="100" width="50" />
+<br/>
+    -->
+    <apex:flash src="{!URLFOR($Resource.Cars_Speakers)}" height="300" width="100%" />
+<br/><br/><br/>
+    
+      <apex:outputText > {!c.name} <br/>  </apex:outputText>
+      
+      </apex:repeat>
+      
+      </apex:tab>
+      
+  </Apex:tabPanel>   
+    
+</apex:page>

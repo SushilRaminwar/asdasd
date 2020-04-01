@@ -1,0 +1,309 @@
+public class Utility {
+    
+    public static List<String> systemFields = Label.GenericMassUpdate_SystemFields.split(',');
+    public static List<String> unsupportedTypes = Label.GenericMassUpdate_UnsupportedTypes.split(',');
+    
+    public static String queryAllFields(string sObjectName, String relatedFields, String whereClause){
+        if(sObjectName != null){
+            Map<String, SObjectField> fieldMap= Schema.getGlobalDescribe().get(sObjectName).getDescribe().fields.getMap();
+            List<String> fieldNames = new List<String>();
+            fieldNames.addAll(fieldMap.keySet());
+            String query = 'select ' + String.join(fieldNames, ',');
+            if(relatedFields != null){
+                query += ',' + relatedFields;
+            }
+            query += ' from ' + sObjectName;
+            if(whereClause != null){
+                query += ' where ' + whereClause;
+            }
+            System.debug('query '+query);
+            return query;
+        }
+        return null;
+    }
+    
+    public static Integer getQuarter(Date d){
+        Integer month = Integer.valueOf(String.valueOf(d).substring(5,7));
+        if(month >= 1 && month <= 3){
+            return 1;
+        } else if(month >= 4 && month <= 6){
+            return 2;
+        } else if(month >= 7 && month <= 9){
+            return 3;
+        } else if(month >= 10 && month <= 12){
+            return 4;
+        }
+        return null;
+    }
+    
+    
+    public static Map<String,String> processMap(Map<Object,Object> filterValueMap, Map<String, SObjectField> fields){
+        Map<String,String> processedMap = new Map<String,String>();
+        for(Object o : filterValueMap.keyset()){
+            String key = String.valueOf(o);
+            String value = String.valueOf(filterValueMap.get(o));
+            String finalValue;
+            if(fields.containsKey(key) && fields.get(key).getDescribe().getType() == Schema.DisplayType.DATETIME){
+                if(value.length() == 15){
+                    if(value.endsWith('null')){
+                        finalValue = 'F'+value.substring(0,10);
+                    } else {
+                        finalValue = 'T'+value.substring(5,15);
+                    }
+                } else if(value.length() > 15 || value.length() < 15){
+                    finalValue = value;
+                }
+                
+            } else if(value.contains('(') || value.contains(')')){
+                value = value.remove('(');
+                value = value.remove(')');
+                if(value.contains(',')){
+                    List<String> temp = value.split(',');
+                    finalValue = '(';
+                    for(String s : temp){
+                        finalValue = finalValue + '\'' + s.trim() + '\'' + ',';
+                    }
+                    finalValue = finalValue.removeEnd(',');
+                    finalValue += ')';
+                } else{
+                    finalValue = '('+'\''+value+'\''+')';
+                }
+            } else {
+                finalValue = value;
+            }
+            Integer a = key.lastIndexOf('_');
+            if(key.charAt(a+1) != 99 || key.countMatches('_') != 2){
+                List<String> temp = key.split('_');
+                Integer counter = 0;
+                String finalString;
+                for(Integer i=0;i<temp.size();i++){
+                    String s = temp[i];
+                    Integer b = s.length();
+                    s = s.deleteWhitespace();
+                    Integer af = s.length();
+                    if(counter == 0){
+                        finalString = s;
+                    } else if(s == ''){
+                        finalString+='_';
+                    } else if(s == 'r'){
+                        finalString+='_r';
+                    } else if(s == 'c'){
+                        finalString+='_c';
+                    } else if(i+1 < temp.size() && temp[i-1] != 'r'){
+                        finalString+='_'+s;
+                    } else{
+                        finalString+='.'+s;
+                    }
+                    counter++;
+                }
+                processedMap.put(finalString,finalValue);
+            } else{
+                processedMap.put(key,finalValue);
+            }
+        }
+        return processedMap;
+    }
+    
+    @AuraEnabled
+    public static Map<String,List<LabelValue>> getPicklistLabelValues(Map<String,List<String>> fields){
+        List<PaT_Lookbook_Filter_Label__mdt> mappings = [select Label__c, Field__c, Object__c from PaT_Lookbook_Filter_Label__mdt where type__c = 'Label'];
+        Map<String,PaT_Lookbook_Filter_Label__mdt> MappingMap = new Map<String,PaT_Lookbook_Filter_Label__mdt>();
+        for(PaT_Lookbook_Filter_Label__mdt mapp : mappings){
+            MappingMap.put(mapp.field__c, mapp);
+        }
+        
+        Map<String,List<LabelValue>> picklistValues = new Map<String,List<LabelValue>>();
+        for(String key : fields.keySet()){
+            List<LabelValue> options;
+            Map<String, SObjectField> fieldMap= Schema.getGlobalDescribe().get(key).getDescribe().fields.getMap();
+            for(String val : fields.get(key)){
+                if (fieldMap.containsKey(val)) {
+                    Schema.DescribeFieldResult dr = fieldMap.get(val).getDescribe();
+                    List<Schema.PicklistEntry> RevisionResult = dr.getPicklistValues();
+                    options = new List<LabelValue>();
+                    if(MappingMap.containsKey(val) && MappingMap.get(val).Object__c == key){
+                        options.add(new LabelValue(MappingMap.get(val).Label__c, MappingMap.get(val).Label__c));
+                    }
+                    if(!RevisionResult.isEmpty()){
+                        for( Schema.PicklistEntry f1 : RevisionResult) {
+                            options.add(new LabelValue(f1.getValue(),f1.getValue()));
+                        }
+                    } else {
+                        options.add(new LabelValue('True','True'));
+                        options.add(new LabelValue('False','False'));
+                    }
+                    if(picklistValues.containsKey(val)){
+                        picklistValues.put(val + '1',options);
+                    } else {
+                        picklistValues.put(val,options);
+                    }
+                }
+            } 
+        }
+        List<LabelValue> options = new List<LabelValue>();
+        options.add(new LabelValue('True','True'));
+        options.add(new LabelValue('False','False'));
+        picklistValues.put('Boolean' ,options);
+        System.debug('picklistValues '+picklistValues.keySet());
+        return picklistValues;   
+    }
+    
+    /* Retrieve picklist values from backend
+* Input : (Marketing_Package__c : (Status__c,Example__c))
+* Output : (Status__c : (New,Open), Example__c : (val1,val2))
+*/
+    @AuraEnabled
+    public static Map<String,List<String>> getPicklistValues(Map<String,List<String>> fields){
+        Map<String,List<String>> picklistValues = new Map<String,List<String>>();
+        for(String key : fields.keySet()){
+            List<String> options;
+            Map<String, SObjectField> fieldMap= Schema.getGlobalDescribe().get(key).getDescribe().fields.getMap();
+            for(String val : fields.get(key)){
+                if (fieldMap.containsKey(val)) {
+                    Schema.DescribeFieldResult dr = fieldMap.get(val).getDescribe();
+                    List<Schema.PicklistEntry> RevisionResult = dr.getPicklistValues();
+                    options = new List<String>();
+                    for( Schema.PicklistEntry f1 : RevisionResult) {
+                        options.add(f1.getValue());
+                    }
+                    if(picklistValues.containsKey(val)){
+                        picklistValues.put(val + '1',options);
+                    } else {
+                        picklistValues.put(val,options);
+                    }
+                }
+            } 
+        }
+        List<String> options = new List<String>();
+        options.add('True');
+        options.add('False');
+        picklistValues.put('Boolean' ,options);
+        System.debug('picklistValues '+picklistValues.keySet());
+        return picklistValues;   
+    }
+    
+    /* Used for creating data for GenericMassUpdate Lightning Component
+* Input : Field Names * Types (boolean or non-boolean)
+* Output : MassUpdate (Wrapper class) object with data
+*/
+    @AuraEnabled
+    public static GenericMassUpdateController.MassUpdate massUpdateFields(List<String> massUpdateFields, String ObjectName){
+        System.debug('massUpdateFields '+massUpdateFields);
+        if(massUpdateFields == null || massUpdateFields.size() == 0){
+            massUpdateFields = getMassUpdateFields(ObjectName);
+        }
+        massUpdateFields = processFields(massUpdateFields);
+        Map<String,String> fieldTypes = getFieldTypeMap(massUpdateFields,ObjectName);
+        GenericMassUpdateController.MassUpdate mu = new GenericMassUpdateController.MassUpdate();
+        List<GenericMassUpdateController.field> fieldList = new List<GenericMassUpdateController.field>();
+        for(String s : massUpdateFields){
+            GenericMassUpdateController.field f = new GenericMassUpdateController.field();
+            f.APIname = s;
+            f.fieldType = fieldTypes.get(s);
+            if(f.fieldType == 'reference'){
+                List<Generic_Mass_Update_Custom_Field_Mapping__mdt> mappings = [select Label__c, Field_Type__c, Reference_Object_API_Name__c, Conditions__c from Generic_Mass_Update_Custom_Field_Mapping__mdt where Object_Name__c = :ObjectName AND Field__c = :s];
+                if(!mappings.isEmpty() && mappings.size() == 1){
+                    f.referenceObjectAPIName = mappings[0].Reference_Object_API_Name__c;
+                    f.conditions = mappings[0].Conditions__c;
+                    f.label = mappings[0].Label__c;
+                }
+            }
+            fieldList.add(f);
+        }
+        mu.fieldlist = fieldList;
+        return mu;
+    }
+    
+    public static Map<String,String> getFieldTypeMap(List<String> massUpdateFields, String ObjectName){
+        Map<String,String> fieldTypes = new Map<String,String>();
+        Map<String, SObjectField> fields = Schema.getGlobalDescribe().get(ObjectName).getDescribe().fields.getMap();
+        for(String field : massUpdateFields){
+            if(fields.containsKey(field) && !fields.get(field).getDescribe().isCalculated()){
+                if(fields.get(field).getDescribe().getType() == Schema.DisplayType.BOOLEAN){
+                    fieldTypes.put(field,'boolean');
+                } else {
+                    fieldTypes.put(field,'nonboolean');
+                }
+            } else {
+                List<Generic_Mass_Update_Custom_Field_Mapping__mdt> mappings = [select Field_Type__c, Reference_Object_API_Name__c, Conditions__c from Generic_Mass_Update_Custom_Field_Mapping__mdt where Object_Name__c = :ObjectName AND Field__c = :field];
+                if(!mappings.isEmpty() && mappings.size() == 1){
+                    fieldTypes.put(field, mappings[0].Field_Type__c);
+                }
+            }
+            
+        }
+        return fieldTypes;
+    }
+    
+    public static List<String> getMassUpdateFields(String ObjectName){
+        Map<String,String> finalFields = new Map<String,String>();
+        List<String> fields;
+        //fields = Fetch_Data_Fields_for_Table.getFieldsAPI(ObjectName).split(',');
+        List<GenericListView__mdt> mapping = [select Columns__c, Fields__c, Navigate_Columns__c, Sorting_Columns__c from GenericListView__mdt where Object_Name__c = :ObjectName limit 1];
+        fields = mapping[0].Fields__c.split(',');
+        
+        Map<String, SObjectField> fields1 = Schema.getGlobalDescribe().get(ObjectName).getDescribe().fields.getMap();
+        for(String s : fields){
+            if(s.contains('.')){
+                List<String> fs = s.split('\\.');
+                String f = fs[0];
+                if(f.endsWith('__r')){
+                    f = f.substring(0,f.length() - 1) + 'c';
+                }
+                if(!systemFields.contains(f.toLowerCase()) && fields1.containsKey(f.toLowerCase()) && !fields1.get(f.toLowerCase()).getDescribe().isCalculated() && !unsupportedTypes.contains(String.valueOf(fields1.get(f.toLowerCase()).getDescribe().getType()))){
+                  finalFields.put(f,f);
+                }
+            } else if(!systemFields.contains(s.toLowerCase()) && fields1.containsKey(s.toLowerCase()) && !fields1.get(s.toLowerCase()).getDescribe().isCalculated() && !unsupportedTypes.contains(String.valueOf(fields1.get(s.toLowerCase()).getDescribe().getType()))){
+                finalFields.put(s,s);
+            }
+        }
+        System.debug('finalFields '+finalFields);
+        return finalFields.values();
+    }
+    
+    public static List<String> processFields(List<String> massUpdateFields){
+        List<String> processedMassUpdateFields = new List<String>();
+        for(String s : massUpdateFields){
+            s = s.remove('{');
+            s = s.remove('\'');
+            s = s.remove('}');
+            processedMassUpdateFields.add(s);
+        }
+        return processedMassUpdateFields;
+    }
+    
+    //Get Custom Label values Dynamically - Only for VF!
+    public static String getLabelString(String labelName ){
+        try{
+            Component.Apex.OutputText output = new Component.Apex.OutputText();
+            output.expressions.value = '{!$Label.' + labelName + '}';
+            return String.valueOf(output.value);
+        } catch(Exception e){
+            return e.getMessage();
+        }
+    }
+    
+    /* Input => (0Marketing_Package__c : Status__c, 1Marketing_Package__c : Example__c)
+* Output => (Marketing_Package__c : (Status__c,Example__c))
+*/
+    @AuraEnabled
+    public static Map<String,List<String>> processFilterValues(Map<String,String> fields){
+        Map<String,List<String>> processedNames = new Map<String,List<String>>();
+        for(String key : fields.keyset()){
+            String nkey = key.substring(1);
+            if(!processedNames.containsKey(nkey)){
+                processedNames.put(nkey,new List<String>());
+            }
+            processedNames.get(nkey).add(fields.get(key));
+        }
+        return processedNames;
+    }
+    
+    public static Map<String,Integer> invertMap(Map<Integer,String> objectMap){
+        Map<String,Integer> processedMap = new Map<String,Integer>();  
+        for(Integer o : objectMap.keySet()){
+            processedMap.put(objectMap.get(o),o);
+        }
+        return processedMap;
+    }
+}

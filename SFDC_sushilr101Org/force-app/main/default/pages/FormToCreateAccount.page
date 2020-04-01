@@ -1,0 +1,47 @@
+<apex:page standardController="account" >
+ <h1>Please Enter Following details </h1>
+ <apex:form >
+ <br/>
+
+
+<apex:outputLabel value="Name" /> <apex:inputField value="{!account.name}"/><br/><br/>
+ <font color="#C19ACB">AccountNumber is been given to you via mail.<br/>
+Please Enter the same account number</font><br/>
+
+<apex:outputLabel value="AccountNumber" /> <apex:inputField value="{!account.AccountNumber}"/><br/>
+<br/>
+<apex:outputLabel value="Industry" /> <apex:inputField value="{!account.Industry}"  html-disabled="true"/><br/>
+<apex:outputLabel value="AnnualRevenue" /> <apex:inputField value="{!account.AnnualRevenue}"  required="true"/><br/>
+<apex:outputLabel value="NumberOfEmployees" /><apex:inputField value="{!account.NumberOfEmployees}"/><br/>
+<apex:outputLabel value="Fax" /> <apex:inputField value="{!account.Fax}"/><br/>
+<apex:outputLabel value="Phone" /><apex:inputField value="{!account.Phone}"/><br/>
+<apex:outputLabel value="Website" /> <apex:inputField value="{!account.Website}"/><br/>
+<apex:outputLabel value="YearStarted" /><apex:inputField value="{!account.YearStarted}"/><br/>
+<apex:outputLabel value="Description" /> <apex:inputField value="{!account.Description}"/><br/>
+
+<br/><br/><br/><br/>
+
+ <apex:outputLabel value="BillingStreet" /> <apex:inputField value="{!account.BillingStreet}" /><br/>
+  <apex:outputLabel value="BillingCity" />     <apex:inputField value="{!account.BillingCity}" /><br/>
+     <apex:outputLabel value="BillingState" />  <apex:inputField value="{!account.BillingState}" /><br/>
+<apex:outputLabel value="BillingCountry" /><apex:inputField value="{!account.BillingCountry}" /><br/>
+     <apex:outputLabel value="BillingPostalCode" />   <apex:inputField value="{!account.BillingPostalCode}" /><br/>
+     
+     
+     
+     <br/><br/><br/><br/>
+     
+     <apex:outputLabel value="ShippingStreet" /> <apex:inputField value="{!account.ShippingStreet}" /><br/>
+  <apex:outputLabel value="ShippingCity" />     <apex:inputField value="{!account.ShippingCity}" /><br/>
+     <apex:outputLabel value="ShippingState" />  <apex:inputField value="{!account.ShippingState}" /><br/>
+<apex:outputLabel value="ShippingCountry" /><apex:inputField value="{!account.ShippingCountry}" /><br/>
+     <apex:outputLabel value="ShippingPostalCode" />   <apex:inputField value="{!account.ShippingPostalCode}" /><br/>
+     
+
+
+<br/>
+
+<apex:commandButton action="{!save}" value="Submit"/>
+
+</apex:form>
+</apex:page>

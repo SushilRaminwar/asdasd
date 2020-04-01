@@ -1,0 +1,6 @@
+<aura:component access="global" implements="flexipage:availableForAllPageTypes">
+   <aura:attribute name="contacts" type="Contact[]"/>
+    <lightning:card title="asdasd">
+   
+    </lightning:card>
+</aura:component>

@@ -1,0 +1,41 @@
+<aura:component
+  controller="TestContactListController1"
+  access="global"
+  implements="flexipage:availableForAllPageTypes"
+>
+  <aura:attribute name="contacts" type="Contact[]" />
+  <aura:handler name="init" value="{!this}" action="{!c.init}" />
+  <lightning:card title="Filtered Contacts">
+      
+      
+    <div class="search-field">
+      <lightning:input
+        aura:id="nameFilter"
+        label="Filter names"
+        onchange="{!c.handleNameFilterChange}"
+      />
+      <div class="slds-form-element__help">ex: (415)111-2222</div>
+    </div>
+    <div class="results">
+      <aura:if isTrue="{!v.contacts.length > 0}">
+        <p class="has-results"> Showing {!v.contacts.length} contact(s): </p>
+        <ol class="slds-list_dotted">
+          <aura:iteration items="{!v.contacts}" var="contact">
+            <li>
+              <a
+                class="contact-name"
+                onclick="{!c.handleClickContactName}"
+                data-sfid="{!contact.Id}"
+              >
+                {!contact.Name}
+              </a>
+            </li>
+          </aura:iteration>
+        </ol>
+        <aura:set attribute="else">
+          <p class="no-results">Nothing to show.</p>
+        </aura:set>
+      </aura:if>
+    </div>
+  </lightning:card>
+</aura:component>

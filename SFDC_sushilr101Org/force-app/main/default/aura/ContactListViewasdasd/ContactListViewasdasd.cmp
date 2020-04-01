@@ -1,0 +1,40 @@
+<aura:component
+  implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction"
+  access="global"
+              controller="SUSHIL_ContactListView"
+>
+
+    <aura:attribute name="mydata" type="Object" />
+   <aura:attribute name="columns" type="List" />
+     <aura:attribute name="showCreate" type="Boolean" />
+   <aura:handler name="init" value="{! this }" action="{! c.init }" />
+    
+<lightning:layout verticalAlign="end"  multipleRows="true">
+    <lightning:layoutItem flexibility="auto, no-grow">
+        
+           <lightning:input aura:id="asdasd" name="city" placeholder="Phone" onchange="{!c.getFilters}"/>`
+        <!-- <lightning:input aura:id="qweqwe" name="industry" placeholder="INDUSTRY" onchange="{!c.getFilters}"/>-->
+             <lightning:button label="Print" iconName="utility:print" onclick="{!c.print}"></lightning:button> 
+        
+       </lightning:layoutItem>
+    
+        <lightning:layoutItem alignmentBump="left">
+              <aura:if isTrue="{!v.showCreate}">
+                <lightning:button label="Create CONTACT" iconName="utility:new" onclick="{!c.createBillingWorkflow}"></lightning:button>
+            </aura:if>
+        </lightning:layoutItem>
+   </lightning:layout>
+
+   
+
+
+   <div style="height: auto">
+    <lightning:datatable
+      aura:id="conDetails"
+      columns="{! v.columns }"
+      data="{! v.mydata }"
+      keyField="Id"
+    />
+  </div>
+
+</aura:component>

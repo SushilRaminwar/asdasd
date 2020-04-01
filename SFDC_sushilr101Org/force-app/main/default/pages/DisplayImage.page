@@ -1,0 +1,6 @@
+<apex:page showHeader="false">
+
+  <h1>Hello</h1>
+  <br/>
+<apex:image value="{!URLFOR($Resource.salesforceLogo)}"/>
+</apex:page>

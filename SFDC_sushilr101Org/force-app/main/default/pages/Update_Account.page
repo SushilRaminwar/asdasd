@@ -1,0 +1,48 @@
+<apex:page standardController="Account">
+<!--    <apex:pageBlock title="Account details">-->
+
+<Apex:tabPanel >
+
+    <apex:tab label="Account details">
+        <apex:pageblockSection >
+            <apex:outputField value="{!account.name}"/>
+            <apex:outputField value="{!account.type}"/>
+            <apex:outputField value="{!account.Industry}"/>
+        </apex:pageblockSection>
+    </apex:tab>
+   
+   
+   
+     <apex:tab label="Account details">
+________________CONTACTS________________:
+        <apex:pageblockSection >
+            <apex:dataList value="{!account.contacts}" var="c" >
+            <apex:outputText value="{!c.name}"/>
+            </apex:datalist>
+        </apex:pageblockSection>
+          
+     </apex:tab>
+     
+     
+   <apex:tab label="Account details">
+    <apex:pageblockSection > 
+  <apex:dataTable value="{!account.opportunities}" var="o" border="1" WIDth="100">
+  
+    <apex:column value="{!o.name}" headerValue="Name"/>
+    <apex:column value="{!o.type}" headerValue="type"/>
+    <apex:column value="{!o.amount}" headerValue="amount"/>
+    <apex:column value="{!o.CloseDate}" headerValue="Close Date"/>
+  
+  </apex:dataTable>
+  
+  
+  </apex:pageblockSection>
+           </apex:tab>
+        
+<!--        <apex:pageblockSection >
+            <apex:relatedList list="opportunities"/>
+        </apex:pageblockSection>
+        -->
+       <!-- </apex:pageBlock> comment from line 2    -->
+       </Apex:tabPanel>
+</apex:page>
